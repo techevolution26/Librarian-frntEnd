@@ -1,14 +1,24 @@
+// components/Row.tsx
 import BookCard from "./BookCard";
+import { Book } from "@/lib/types";
 
-export default function Row({ title, books }) {
+interface RowProps {
+  title: string;
+  books: Book[];
+}
+
+export default function Row({ title, books }: RowProps) {
   return (
-    <div className="px-6 mt-6">
-      <h2 className="text-white text-xl mb-3">{title}</h2>
-      <div className="flex gap-4 overflow-x-scroll scrollbar-hide">
+    <section className="space-y-3">
+      <h2 className="text-lg font-semibold tracking-tight text-white/90">
+        {title}
+      </h2>
+
+      <div className="flex gap-4 overflow-x-auto pb-2 pr-2">
         {books.map((book) => (
           <BookCard key={book.id} book={book} />
         ))}
       </div>
-    </div>
+    </section>
   );
 }
