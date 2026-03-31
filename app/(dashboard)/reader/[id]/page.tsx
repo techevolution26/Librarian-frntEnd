@@ -49,15 +49,15 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
       <section className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-6 sm:p-8">
         <div className="prose prose-invert max-w-none prose-p:leading-8 prose-p:text-white/78 prose-headings:text-white">
           <p>
-            {book.description} This is the reader canvas where you I can
-            wire in chapter navigation, font controls, bookmarks, and page
+            {book.description} This is the reader canvas where your book will appear here when ready.This
+            wires in chapter navigation, font controls, bookmarks, and page
             progress persistence.
           </p>
 
-          <p>
+          {/* <p>
             Adding your chapter content here, or connect view to a backend or
             CMS once the UI is stable.
-          </p>
+          </p> */}
         </div>
       </section>
 

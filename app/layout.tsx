@@ -14,13 +14,13 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "BookBox",
-    template: "%s | BookBox",
+    default: "Librarian",
+    template: "%s | Librarian",
   },
   description: "Discover, save, and read books in a modern streaming-style interface.",
-  metadataBase: new URL("https://bookbox.example"),
+  metadataBase: new URL("https://librarian.example"),
   openGraph: {
-    title: "BookBox",
+    title: "Librarian",
     description: "Discover, save, and read books in a modern streaming-style interface.",
     type: "website",
   },
