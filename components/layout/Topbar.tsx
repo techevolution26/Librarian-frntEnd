@@ -3,22 +3,21 @@
 
 import Link from "next/link";
 import { ChangeEvent, useEffect, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export default function Topbar() {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const currentQuery = searchParams.get("q") ?? "";
-  const [inputValue, setInputValue] = useState(currentQuery);
-
-  useEffect(() => {
-    setInputValue(currentQuery);
-  }, [currentQuery]);
+  const [inputValue, setInputValue] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const params = new URLSearchParams(window.location.search);
+    return params.get("q") ?? "";
+  });
 
   const updateQuery = (value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(
+      typeof window !== "undefined" ? window.location.search : "",
+    );
 
     if (value.trim()) {
       params.set("q", value);
@@ -26,7 +25,8 @@ export default function Topbar() {
       params.delete("q");
     }
 
-    router.replace(`${pathname}?${params.toString()}`);
+    const next = params.toString();
+    router.replace(next ? `${pathname}?${next}` : pathname);
   };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -73,11 +73,17 @@ export default function Topbar() {
           </div>
         </div>
 
-        <button className="hidden rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80 transition hover:bg-white/10 sm:inline-flex">
+        <button
+          type="button"
+          className="hidden rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80 transition hover:bg-white/10 sm:inline-flex"
+        >
           Filter
         </button>
 
-        <button className="hidden rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80 transition hover:bg-white/10 sm:inline-flex">
+        <button
+          type="button"
+          className="hidden rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80 transition hover:bg-white/10 sm:inline-flex"
+        >
           Notifications
         </button>
 

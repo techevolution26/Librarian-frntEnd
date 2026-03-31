@@ -20,13 +20,13 @@ export default function Sidebar() {
       <div className="mb-8">
         <Link href="/" className="inline-flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/10">
-            <span className="text-sm font-semibold text-white">B</span>
+            <span className="text-sm font-semibold text-white">L</span>
           </div>
           <div>
             <h1 className="text-lg font-semibold tracking-tight text-white">
-              BookBox
+              Librarian
             </h1>
-            <p className="text-xs text-white/45">SaaS reading platform</p>
+            <p className="text-xs text-white/45">Transforming Your Mind</p>
           </div>
         </Link>
       </div>

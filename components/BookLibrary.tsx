@@ -5,10 +5,14 @@ import Row from "@/components/Row";
 import { useDashboardSearch } from "@/store/useDashboardSearch";
 
 interface Book {
+    id: string;
     title: string;
     author: string;
     description: string;
-    genre?: string[];
+    genre: string[];
+    cover: string;
+    rating: number;
+    pages: number;
 }
 
 export default function BookLibrary({ allBooks }: { allBooks: Book[] }) {
