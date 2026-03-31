@@ -1,26 +1,39 @@
-import { books } from "@/lib/data";
+"use client";
+
+import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import BookCard from "@/components/BookCard";
-import type { Book } from "@/lib/types";
+import type { LibraryBook } from "@/lib/types";
+import { filterBooks } from "@/lib/filter-books";
+import {
+    getAverageRating,
+    getLibraryCounts,
+    getReadingBooks,
+    getSectionBooks,
+    libraryBooks,
+    librarySectionConfigs,
+    type LibrarySectionKey,
+} from "@/lib/library";
 
-const savedBooks = books.slice(0, 8);
-const readingBooks = books.slice(0, 4);
-const finishedBooks = books.slice(0, 3);
-
-function StatCard({
-    label,
-    value,
-    hint,
-}: {
+interface StatCardProps {
     label: string;
     value: string;
     hint: string;
-}) {
+}
+
+interface ShelfProps {
+    title: string;
+    books: LibraryBook[];
+    emptyLabel: string;
+    size?: "sm" | "md" | "lg";
+    tone?: "default" | "featured";
+}
+
+function StatCard({ label, value, hint }: StatCardProps) {
     return (
         <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-lg backdrop-blur">
             <p className="text-xs uppercase tracking-[0.2em] text-white/45">{label}</p>
-            <p className="mt-3 text-3xl font-semibold tracking-tight text-white">
-                {value}
-            </p>
+            <p className="mt-3 text-3xl font-semibold tracking-tight text-white">{value}</p>
             <p className="mt-2 text-sm leading-6 text-white/60">{hint}</p>
         </div>
     );
@@ -30,18 +43,19 @@ function Shelf({
     title,
     books,
     emptyLabel,
-}: {
-    title: string;
-    books: Book[];
-    emptyLabel: string;
-}) {
+    size = "md",
+    tone = "default",
+}: ShelfProps) {
+    const wrapClass =
+        tone === "featured"
+            ? "rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_35%),linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] p-6"
+            : "";
+
     return (
-        <section className="space-y-4">
+        <section className={["space-y-4", wrapClass].filter(Boolean).join(" ")}>
             <div className="flex items-end justify-between gap-4">
                 <div>
-                    <h2 className="text-xl font-semibold tracking-tight text-white">
-                        {title}
-                    </h2>
+                    <h2 className="text-xl font-semibold tracking-tight text-white">{title}</h2>
                     <p className="mt-1 text-sm text-white/55">{emptyLabel}</p>
                 </div>
                 <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-white/60">
@@ -52,7 +66,7 @@ function Shelf({
             {books.length > 0 ? (
                 <div className="flex gap-4 overflow-x-auto pb-2 pr-2">
                     {books.map((book) => (
-                        <BookCard key={book.id} book={book} />
+                        <BookCard key={book.id} book={book} size={size} />
                     ))}
                 </div>
             ) : (
@@ -64,7 +78,48 @@ function Shelf({
     );
 }
 
-export default function Library() {
+export default function LibraryPage() {
+    const searchParams = useSearchParams();
+    const query = searchParams.get("q") ?? "";
+
+    const [activeSection, setActiveSection] = useState<LibrarySectionKey>("all");
+
+    const filteredLibraryBooks = useMemo(
+        () => filterBooks(libraryBooks, query),
+        [query],
+    );
+
+    const counts = useMemo(
+        () => getLibraryCounts(filteredLibraryBooks),
+        [filteredLibraryBooks],
+    );
+
+    const avgRating = useMemo(
+        () => getAverageRating(filteredLibraryBooks),
+        [filteredLibraryBooks],
+    );
+
+    const readingBooks = useMemo(
+        () => getReadingBooks(filteredLibraryBooks),
+        [filteredLibraryBooks],
+    );
+
+    const visibleSections = useMemo(() => {
+        if (activeSection === "all") {
+            return librarySectionConfigs.map((section) => ({
+                ...section,
+                books: getSectionBooks(filteredLibraryBooks, section.key),
+            }));
+        }
+
+        return librarySectionConfigs
+            .filter((section) => section.key === activeSection)
+            .map((section) => ({
+                ...section,
+                books: getSectionBooks(filteredLibraryBooks, section.key),
+            }));
+    }, [activeSection, filteredLibraryBooks]);
+
     return (
         <div className="space-y-8">
             <section className="rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_35%),linear-gradient(to_bottom_right,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] p-6 shadow-2xl sm:p-8">
@@ -76,33 +131,68 @@ export default function Library() {
                         Your Library
                     </h1>
                     <p className="mt-4 max-w-2xl text-sm leading-7 text-white/70 sm:text-base">
-                        Track what you have saved, what you are reading, and what you have
-                        finished — all in one clean dashboard.
+                        Browse all your books from one source of truth and switch between
+                        reading states without hardcoded shelves.
                     </p>
+
+                    {query ? (
+                        <p className="mt-4 text-sm text-white/55">
+                            Showing results for{" "}
+                            <span className="font-medium text-white">&quot;{query}&quot;</span>
+                        </p>
+                    ) : null}
                 </div>
             </section>
 
             <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <StatCard
-                    label="Saved books"
-                    value="48"
-                    hint="Books added to your collection."
+                    label="All books"
+                    value={String(counts.all)}
+                    hint="Everything currently in your filtered library."
                 />
                 <StatCard
                     label="Currently reading"
-                    value="12"
-                    hint="Active books with reading progress."
+                    value={String(counts.reading)}
+                    hint="Books with active reading progress."
                 />
                 <StatCard
-                    label="Finished this month"
-                    value="9"
-                    hint="Completed reads in the last 30 days."
+                    label="Saved"
+                    value={String(counts.saved)}
+                    hint="Books queued for later."
                 />
                 <StatCard
                     label="Average rating"
-                    value="4.8"
-                    hint="How much you are enjoying your reads."
+                    value={avgRating}
+                    hint="Average rating across filtered results."
                 />
+            </section>
+
+            <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
+                <div className="flex flex-wrap gap-3">
+                    {[
+                        { key: "all", label: "All", count: counts.all },
+                        { key: "reading", label: "Reading", count: counts.reading },
+                        { key: "saved", label: "Saved", count: counts.saved },
+                        { key: "finished", label: "Finished", count: counts.finished },
+                    ].map((tab) => {
+                        const isActive = activeSection === tab.key;
+
+                        return (
+                            <button
+                                key={tab.key}
+                                onClick={() => setActiveSection(tab.key as LibrarySectionKey)}
+                                className={[
+                                    "rounded-full border px-4 py-2 text-sm transition",
+                                    isActive
+                                        ? "border-white/20 bg-white text-black"
+                                        : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white",
+                                ].join(" ")}
+                            >
+                                {tab.label} ({tab.count})
+                            </button>
+                        );
+                    })}
+                </div>
             </section>
 
             <section className="grid gap-6 xl:grid-cols-3">
@@ -111,35 +201,26 @@ export default function Library() {
                         Reading progress
                     </p>
                     <div className="mt-4 space-y-4">
-                        <div>
-                            <div className="mb-2 flex items-center justify-between text-sm text-white/70">
-                                <span>Atomic Habits</span>
-                                <span>78%</span>
-                            </div>
-                            <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                                <div className="h-full w-[78%] rounded-full bg-white/80" />
-                            </div>
-                        </div>
-
-                        <div>
-                            <div className="mb-2 flex items-center justify-between text-sm text-white/70">
-                                <span>Deep Work</span>
-                                <span>42%</span>
-                            </div>
-                            <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                                <div className="h-full w-[42%] rounded-full bg-white/60" />
-                            </div>
-                        </div>
-
-                        <div>
-                            <div className="mb-2 flex items-center justify-between text-sm text-white/70">
-                                <span>The Psychology of Money</span>
-                                <span>91%</span>
-                            </div>
-                            <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                                <div className="h-full w-[91%] rounded-full bg-white" />
-                            </div>
-                        </div>
+                        {readingBooks.length > 0 ? (
+                            readingBooks.map((book) => (
+                                <div key={book.id}>
+                                    <div className="mb-2 flex items-center justify-between text-sm text-white/70">
+                                        <span>{book.title}</span>
+                                        <span>{book.progress ?? 0}%</span>
+                                    </div>
+                                    <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                                        <div
+                                            className="h-full rounded-full bg-white/80"
+                                            style={{ width: `${book.progress ?? 0}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-sm text-white/55">
+                                No active reading progress for this search.
+                            </p>
+                        )}
                     </div>
                 </div>
 
@@ -182,22 +263,23 @@ export default function Library() {
             </section>
 
             <div className="space-y-10">
-                <Shelf
-                    title="Currently Reading"
-                    books={readingBooks}
-                    emptyLabel="Books you are actively reading right now."
-                />
-                <Shelf
-                    title="Saved for Later"
-                    books={savedBooks}
-                    emptyLabel="Books you have bookmarked or want to start."
-                />
-                <Shelf
-                    title="Finished"
-                    books={finishedBooks}
-                    emptyLabel="Books you have completed."
-                />
+                {visibleSections.map((section) => (
+                    <Shelf
+                        key={section.key}
+                        title={section.title}
+                        books={section.books}
+                        emptyLabel={section.emptyLabel}
+                        size={section.size}
+                        tone={section.tone}
+                    />
+                ))}
             </div>
+
+            {filteredLibraryBooks.length === 0 ? (
+                <section className="rounded-3xl border border-dashed border-white/10 bg-white/[0.03] p-8 text-sm text-white/50">
+                    No library books match your search.
+                </section>
+            ) : null}
         </div>
     );
 }

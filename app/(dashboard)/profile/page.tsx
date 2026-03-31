@@ -1,32 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
-import { books } from "@/lib/data";
+import BookCard from "@/components/BookCard";
+import { getUserProfile } from "@/lib/profile";
 
-const recentBooks = books.slice(0, 4);
-const favoriteBooks = books.slice(0, 6);
-
-const readingStats = [
-    { label: "Books saved", value: "48" },
-    { label: "Pages read", value: "1,284" },
-    { label: "Reading streak", value: "7 days" },
-    { label: "Avg rating", value: "4.8" },
-];
-
-const preferences = [
-    "Productivity",
-    "Business",
-    "Mindset",
-    "Design",
-    "Non-fiction",
-];
-
-function StatCard({
-    label,
-    value,
-}: {
+interface StatCardProps {
     label: string;
     value: string;
-}) {
+}
+
+function StatCard({ label, value }: StatCardProps) {
     return (
         <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-lg">
             <p className="text-xs uppercase tracking-[0.2em] text-white/45">{label}</p>
@@ -38,14 +20,16 @@ function StatCard({
 }
 
 export default function ProfilePage() {
+    const profile = getUserProfile();
+
     return (
         <div className="space-y-8">
             <section className="grid gap-6 rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_35%),linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] p-6 shadow-2xl sm:p-8 lg:grid-cols-[280px_1fr] lg:p-10">
                 <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
                     <div className="relative mx-auto h-28 w-28 overflow-hidden rounded-full border border-white/10 bg-white/5">
                         <Image
-                            src="https://picsum.photos/300"
-                            alt="User avatar"
+                            src={profile.avatar}
+                            alt={`${profile.name} avatar`}
                             fill
                             className="object-cover"
                             sizes="112px"
@@ -54,18 +38,21 @@ export default function ProfilePage() {
 
                     <div className="mt-5 text-center">
                         <h1 className="text-2xl font-semibold tracking-tight text-white">
-                            Tech Resolute
+                            {profile.name}
                         </h1>
-                        <p className="mt-1 text-sm text-white/60">Free plan user</p>
+                        <p className="mt-1 text-sm text-white/60">{profile.plan}</p>
                     </div>
 
                     <div className="mt-6 space-y-3">
                         <button className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/85 transition hover:bg-white/10">
                             Edit profile
                         </button>
-                        <button className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/85 transition hover:bg-white/10">
+                        <Link
+                            href="/settings"
+                            className="block w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-center text-sm text-white/85 transition hover:bg-white/10"
+                        >
                             Account settings
-                        </button>
+                        </Link>
                     </div>
                 </div>
 
@@ -78,8 +65,8 @@ export default function ProfilePage() {
                             Your reading profile
                         </h2>
                         <p className="mt-4 max-w-2xl text-sm leading-7 text-white/70 sm:text-base">
-                            View your reading habits, saved books, recent activity, and personalized
-                            preferences from one place.
+                            View your reading habits, saved books, recent activity, and
+                            personalized preferences from one place.
                         </p>
                     </div>
 
@@ -88,28 +75,28 @@ export default function ProfilePage() {
                             <p className="text-xs uppercase tracking-[0.2em] text-white/40">
                                 Member since
                             </p>
-                            <p className="mt-2 text-2xl font-semibold">2026</p>
+                            <p className="mt-2 text-2xl font-semibold">{profile.memberSince}</p>
                         </div>
 
                         <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
                             <p className="text-xs uppercase tracking-[0.2em] text-white/40">
                                 Library status
                             </p>
-                            <p className="mt-2 text-2xl font-semibold">Active</p>
+                            <p className="mt-2 text-2xl font-semibold">{profile.libraryStatus}</p>
                         </div>
 
                         <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
                             <p className="text-xs uppercase tracking-[0.2em] text-white/40">
                                 Reading mode
                             </p>
-                            <p className="mt-2 text-2xl font-semibold">Dark</p>
+                            <p className="mt-2 text-2xl font-semibold">{profile.readingMode}</p>
                         </div>
                     </div>
                 </div>
             </section>
 
             <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                {readingStats.map((item) => (
+                {profile.stats.map((item) => (
                     <StatCard key={item.label} label={item.label} value={item.value} />
                 ))}
             </section>
@@ -131,35 +118,20 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="mt-6 space-y-5">
-                        <div>
-                            <div className="mb-2 flex items-center justify-between text-sm text-white/70">
-                                <span>Atomic Habits</span>
-                                <span>78%</span>
+                        {profile.readingProgress.map((item) => (
+                            <div key={item.id}>
+                                <div className="mb-2 flex items-center justify-between text-sm text-white/70">
+                                    <span>{item.title}</span>
+                                    <span>{item.progress}%</span>
+                                </div>
+                                <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                                    <div
+                                        className="h-full rounded-full bg-white/80"
+                                        style={{ width: `${item.progress}%` }}
+                                    />
+                                </div>
                             </div>
-                            <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                                <div className="h-full w-[78%] rounded-full bg-white/80" />
-                            </div>
-                        </div>
-
-                        <div>
-                            <div className="mb-2 flex items-center justify-between text-sm text-white/70">
-                                <span>Deep Work</span>
-                                <span>42%</span>
-                            </div>
-                            <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                                <div className="h-full w-[42%] rounded-full bg-white/60" />
-                            </div>
-                        </div>
-
-                        <div>
-                            <div className="mb-2 flex items-center justify-between text-sm text-white/70">
-                                <span>The Psychology of Money</span>
-                                <span>91%</span>
-                            </div>
-                            <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                                <div className="h-full w-[91%] rounded-full bg-white" />
-                            </div>
-                        </div>
+                        ))}
                     </div>
                 </div>
 
@@ -172,7 +144,7 @@ export default function ProfilePage() {
                     </h3>
 
                     <div className="mt-5 flex flex-wrap gap-2">
-                        {preferences.map((item) => (
+                        {profile.preferences.map((item) => (
                             <span
                                 key={item}
                                 className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70"
@@ -182,19 +154,23 @@ export default function ProfilePage() {
                         ))}
                     </div>
 
-                    <div className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-4">
-                        <p className="text-sm text-white/60">Suggested next read</p>
-                        <p className="mt-2 text-lg font-medium text-white">Deep Work</p>
-                        <p className="mt-2 text-sm leading-6 text-white/70">
-                            Based on your recent activity and saved books.
-                        </p>
-                        <Link
-                            href="/book/2"
-                            className="mt-4 inline-flex rounded-xl bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-white/90"
-                        >
-                            Open suggestion
-                        </Link>
-                    </div>
+                    {profile.suggestedBook ? (
+                        <div className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-4">
+                            <p className="text-sm text-white/60">Suggested next read</p>
+                            <p className="mt-2 text-lg font-medium text-white">
+                                {profile.suggestedBook.title}
+                            </p>
+                            <p className="mt-2 text-sm leading-6 text-white/70">
+                                Based on your recent activity and saved books.
+                            </p>
+                            <Link
+                                href={`/book/${profile.suggestedBook.id}`}
+                                className="mt-4 inline-flex rounded-xl bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-white/90"
+                            >
+                                Open suggestion
+                            </Link>
+                        </div>
+                    ) : null}
                 </div>
             </section>
 
@@ -214,24 +190,8 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="flex gap-4 overflow-x-auto pb-2 pr-2">
-                    {favoriteBooks.map((book) => (
-                        <Link key={book.id} href={`/book/${book.id}`} className="group min-w-[160px]">
-                            <article className="transition-transform duration-200 group-hover:-translate-y-1">
-                                <div className="relative aspect-[2/3] overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-lg">
-                                    <Image
-                                        src={book.cover}
-                                        alt={book.title}
-                                        fill
-                                        sizes="160px"
-                                        className="object-cover transition duration-300 group-hover:scale-105"
-                                    />
-                                </div>
-                                <h4 className="mt-3 line-clamp-1 text-sm font-medium text-white">
-                                    {book.title}
-                                </h4>
-                                <p className="line-clamp-1 text-xs text-white/60">{book.author}</p>
-                            </article>
-                        </Link>
+                    {profile.favoriteBooks.map((book) => (
+                        <BookCard key={book.id} book={book} size="md" />
                     ))}
                 </div>
             </section>
@@ -240,18 +200,20 @@ export default function ProfilePage() {
                 <p className="text-xs uppercase tracking-[0.24em] text-white/45">
                     Recent activity
                 </p>
+
                 <div className="mt-5 space-y-4">
-                    {recentBooks.map((book) => (
+                    {profile.recentActivity.map((item) => (
                         <div
-                            key={book.id}
+                            key={item.id}
                             className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/20 px-4 py-3"
                         >
                             <div>
-                                <p className="font-medium text-white">{book.title}</p>
-                                <p className="text-sm text-white/60">Opened today</p>
+                                <p className="font-medium text-white">{item.title}</p>
+                                <p className="text-sm text-white/60">{item.action}</p>
                             </div>
+
                             <Link
-                                href={`/book/${book.id}`}
+                                href={item.href}
                                 className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 transition hover:bg-white/10"
                             >
                                 View

@@ -1,13 +1,43 @@
+// components/layout/Topbar.tsx
 "use client";
 
 import Link from "next/link";
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 export default function Topbar() {
-  const [query, setQuery] = useState("");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const currentQuery = searchParams.get("q") ?? "";
+  const [inputValue, setInputValue] = useState(currentQuery);
+
+  useEffect(() => {
+    setInputValue(currentQuery);
+  }, [currentQuery]);
+
+  const updateQuery = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (value.trim()) {
+      params.set("q", value);
+    } else {
+      params.delete("q");
+    }
+
+    router.replace(`${pathname}?${params.toString()}`);
+  };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setQuery(e.target.value);
+    const value = e.target.value;
+    setInputValue(value);
+    updateQuery(value);
+  };
+
+  const clearQuery = () => {
+    setInputValue("");
+    updateQuery("");
   };
 
   return (
@@ -21,14 +51,25 @@ export default function Topbar() {
           <div className="relative max-w-2xl">
             <input
               id="book-search"
-              value={query}
+              value={inputValue}
               onChange={handleChange}
               placeholder="Search books, authors, genres..."
-              className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 pr-12 text-sm text-white outline-none placeholder:text-white/35 transition focus:border-white/20 focus:bg-white/10"
+              className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 pr-20 text-sm text-white outline-none placeholder:text-white/35 transition focus:border-white/20 focus:bg-white/10"
             />
-            <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-white/30">
-              ⌘K
-            </div>
+
+            {inputValue ? (
+              <button
+                type="button"
+                onClick={clearQuery}
+                className="absolute inset-y-0 right-3 my-auto h-8 rounded-lg px-2 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
+              >
+                Clear
+              </button>
+            ) : (
+              <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-white/30">
+                ⌘K
+              </div>
+            )}
           </div>
         </div>
 

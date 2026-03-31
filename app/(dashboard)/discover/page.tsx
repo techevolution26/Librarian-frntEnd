@@ -1,19 +1,49 @@
+"use client";
+
+import { useMemo, type ReactNode } from "react";
+import {
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+
 import { books } from "@/lib/data";
 import BookCard from "@/components/BookCard";
-import type { Book } from "@/lib/types";
+import { filterBooks } from "@/lib/filter-books";
+import {
+  DEFAULT_GENRE,
+  DEFAULT_SORT,
+  enrichBooks,
+  filterByGenre,
+  getAvailableGenres,
+  getCategoriesCount,
+  getTopRatedCount,
+  isValidSort,
+  sortBooks,
+  sortOptions,
+} from "@/lib/discover";
 
-const genres = ["All", "Productivity", "Business", "Mindset", "Fiction", "Design"];
-const sortOptions = ["Recommended", "Top Rated", "Newest", "Most Saved"];
+interface FilterChipProps {
+  children: ReactNode;
+  active?: boolean;
+  onClick?: () => void;
+}
+
+interface DiscoverSectionProps {
+  title: string;
+  subtitle: string;
+  items: ReturnType<typeof enrichBooks>;
+}
 
 function FilterChip({
   children,
   active = false,
-}: {
-  children: React.ReactNode;
-  active?: boolean;
-}) {
+  onClick,
+}: FilterChipProps) {
   return (
     <button
+      type="button"
+      onClick={onClick}
       className={[
         "rounded-full border px-4 py-2 text-sm transition",
         active
@@ -30,11 +60,7 @@ function DiscoverSection({
   title,
   subtitle,
   items,
-}: {
-  title: string;
-  subtitle: string;
-  items: Book[];
-}) {
+}: DiscoverSectionProps) {
   return (
     <section className="space-y-4">
       <div>
@@ -44,19 +70,85 @@ function DiscoverSection({
         <p className="mt-1 text-sm text-white/55">{subtitle}</p>
       </div>
 
-      <div className="flex gap-4 overflow-x-auto pb-2 pr-2">
-        {items.map((book) => (
-          <BookCard key={book.id} book={book} />
-        ))}
-      </div>
+      {items.length > 0 ? (
+        <div className="flex gap-4 overflow-x-auto pb-2 pr-2">
+          {items.map((book) => (
+            <BookCard key={book.id} book={book} size="md" />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-3xl border border-dashed border-white/10 bg-white/[0.03] p-8 text-sm text-white/50">
+          No books match this section right now.
+        </div>
+      )}
     </section>
   );
 }
 
-export default function Discover() {
-  const recommended = books.slice(0, 6);
-  const trending = books.slice(0, 6);
-  const newArrivals = books.slice(0, 6);
+export default function DiscoverPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const query = searchParams.get("q") ?? "";
+  const rawGenre = searchParams.get("genre");
+  const rawSort = searchParams.get("sort");
+
+  const enrichedBooks = useMemo(() => enrichBooks(books), []);
+  const availableGenres = useMemo(() => getAvailableGenres(books), []);
+
+  const activeGenre =
+    rawGenre && availableGenres.includes(rawGenre) ? rawGenre : DEFAULT_GENRE;
+
+  const activeSort = isValidSort(rawSort) ? rawSort : DEFAULT_SORT;
+
+  const setParams = (updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (
+        !value ||
+        (key === "genre" && value === DEFAULT_GENRE) ||
+        (key === "sort" && value === DEFAULT_SORT) ||
+        (key === "q" && value.trim() === "")
+      ) {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+
+    const next = params.toString();
+    router.replace(next ? `${pathname}?${next}` : pathname);
+  };
+
+  const searchedBooks = useMemo(
+    () => filterBooks(enrichedBooks, query),
+    [enrichedBooks, query],
+  );
+
+  const filteredBooks = useMemo(() => {
+    const byGenre = filterByGenre(searchedBooks, activeGenre);
+    return sortBooks(byGenre, activeSort);
+  }, [searchedBooks, activeGenre, activeSort]);
+
+  const recommended = useMemo(
+    () => sortBooks(filteredBooks, "Recommended").slice(0, 6),
+    [filteredBooks],
+  );
+
+  const trending = useMemo(
+    () => sortBooks(filteredBooks, "Top Rated").slice(0, 6),
+    [filteredBooks],
+  );
+
+  const newArrivals = useMemo(
+    () => sortBooks(filteredBooks, "Newest").slice(0, 6),
+    [filteredBooks],
+  );
+
+  const topRatedCount = getTopRatedCount(filteredBooks);
+  const categoriesCount = getCategoriesCount(filteredBooks);
 
   return (
     <div className="space-y-8">
@@ -64,28 +156,59 @@ export default function Discover() {
         <p className="text-xs uppercase tracking-[0.24em] text-white/45">
           Discover books
         </p>
+
         <div className="mt-3 max-w-3xl">
           <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
             Discover
           </h1>
+
           <p className="mt-4 text-sm leading-7 text-white/70 sm:text-base">
-            Browse curated books by genre, popularity, and freshness. This page
-            is built for exploration, not just a flat grid.
+            Browse curated books by genre, popularity, and freshness.
           </p>
+
+          {(query || activeGenre !== DEFAULT_GENRE || activeSort !== DEFAULT_SORT) && (
+            <div className="mt-4 flex flex-wrap gap-2 text-sm text-white/55">
+              {query ? (
+                <span>
+                  Search: <span className="font-medium text-white">&quot;{query}&quot;</span>
+                </span>
+              ) : null}
+              {activeGenre !== DEFAULT_GENRE ? (
+                <span>
+                  Genre: <span className="font-medium text-white">{activeGenre}</span>
+                </span>
+              ) : null}
+              {activeSort !== DEFAULT_SORT ? (
+                <span>
+                  Sort: <span className="font-medium text-white">{activeSort}</span>
+                </span>
+              ) : null}
+            </div>
+          )}
         </div>
       </section>
 
       <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-5">
-        <div className="flex flex-wrap items-center gap-3">
-          {genres.map((genre, index) => (
-            <FilterChip key={genre} active={index === 0}>
-              {genre}
-            </FilterChip>
-          ))}
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex flex-wrap items-center gap-3">
+            {availableGenres.map((genre) => (
+              <FilterChip
+                key={genre}
+                active={activeGenre === genre}
+                onClick={() => setParams({ genre })}
+              >
+                {genre}
+              </FilterChip>
+            ))}
+          </div>
 
-          <div className="ml-auto flex flex-wrap gap-2">
-            {sortOptions.map((option, index) => (
-              <FilterChip key={option} active={index === 0}>
+          <div className="flex flex-wrap gap-2">
+            {sortOptions.map((option) => (
+              <FilterChip
+                key={option}
+                active={activeSort === option}
+                onClick={() => setParams({ sort: option })}
+              >
                 {option}
               </FilterChip>
             ))}
@@ -95,37 +218,75 @@ export default function Discover() {
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5">
-          <p className="text-sm text-white/60">Available books</p>
-          <p className="mt-2 text-3xl font-semibold">{books.length}</p>
+          <p className="text-sm text-white/60">Visible books</p>
+          <p className="mt-2 text-3xl font-semibold">{filteredBooks.length}</p>
         </div>
+
         <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5">
           <p className="text-sm text-white/60">Top rated</p>
-          <p className="mt-2 text-3xl font-semibold">12</p>
+          <p className="mt-2 text-3xl font-semibold">{topRatedCount}</p>
         </div>
+
         <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5">
-          <p className="text-sm text-white/60">New this week</p>
-          <p className="mt-2 text-3xl font-semibold">6</p>
+          <p className="text-sm text-white/60">New in results</p>
+          <p className="mt-2 text-3xl font-semibold">{newArrivals.length}</p>
         </div>
+
         <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5">
           <p className="text-sm text-white/60">Categories</p>
-          <p className="mt-2 text-3xl font-semibold">18</p>
+          <p className="mt-2 text-3xl font-semibold">{categoriesCount}</p>
         </div>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight text-white">
+              Explore All
+            </h2>
+            <p className="mt-1 text-sm text-white/55">
+              All books matching your active search, genre, and sorting.
+            </p>
+          </div>
+
+          {(query || activeGenre !== DEFAULT_GENRE || activeSort !== DEFAULT_SORT) && (
+            <button
+              type="button"
+              onClick={() => setParams({ q: null, genre: null, sort: null })}
+              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/75 transition hover:bg-white/10 hover:text-white"
+            >
+              Reset filters
+            </button>
+          )}
+        </div>
+
+        {filteredBooks.length > 0 ? (
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6">
+            {filteredBooks.map((book) => (
+              <BookCard key={book.id} book={book} size="md" />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-3xl border border-dashed border-white/10 bg-white/[0.03] p-8 text-sm text-white/50">
+            No books found. Try another search term, genre, or sort option.
+          </div>
+        )}
       </section>
 
       <div className="space-y-10">
         <DiscoverSection
           title="Recommended for You"
-          subtitle="A personalized shelf based on recent reading behavior."
+          subtitle="Best-ranked books from your current filtered result set."
           items={recommended}
         />
         <DiscoverSection
           title="Trending Now"
-          subtitle="What readers are saving and opening right now."
+          subtitle="Top-rated books from what currently matches."
           items={trending}
         />
         <DiscoverSection
           title="New Arrivals"
-          subtitle="Fresh titles recently added to the platform."
+          subtitle="Newest books from the current filtered set."
           items={newArrivals}
         />
       </div>

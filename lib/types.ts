@@ -8,3 +8,12 @@ export interface Book {
   rating: number;
   pages: number;
 }
+
+export type LibraryStatus = "reading" | "saved" | "finished";
+
+export interface LibraryBook extends Book {
+  status: LibraryStatus;
+  progress: number;
+  addedAt?: string;
+  finishedAt?: string;
+}
