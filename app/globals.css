@@ -52,3 +52,19 @@ body {
   background: var(--accent);
   color: white;
 }
+
+.react-pdf__Document {
+  max-width: 100%;
+}
+
+.react-pdf__Page {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.react-pdf__Page canvas {
+  display: block;
+  max-width: 100%;
+  height: auto !important;
+  margin: 0 auto;
+}

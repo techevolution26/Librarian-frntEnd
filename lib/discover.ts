@@ -1,4 +1,3 @@
-// lib/discover.ts
 import type { Book } from "@/lib/types";
 
 export const DEFAULT_GENRE = "All";

@@ -7,6 +7,11 @@ export interface Book {
   genre: string[];
   rating: number;
   pages: number;
+  current_page?: number;
+  total_pages?: number;
+  progress?: number;
+  bookmark_page?: number;
+  save_progress?: boolean;
 }
 
 export type LibraryStatus = "reading" | "saved" | "finished";
