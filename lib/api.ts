@@ -2,7 +2,7 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
 export interface Book {
-  id: number;
+  id: number ;
   title: string;
   author: string;
   cover: string;
@@ -11,8 +11,8 @@ export interface Book {
   pages: number;
   genre: string[];
   source_type: "text" | "pdf" | string;
-  source_url?: string | null;
-  mime_type?: string | null;
+  source_url: string | null;
+  mime_type: string | null;
 }
 
 export interface BookContent {
@@ -44,6 +44,57 @@ export interface SavePdfProgressPayload {
   totalPages: number;
   progressPercent: number;
   bookmarkPage?: number | null;
+}
+
+export interface LibrarySummary {
+  all: number;
+  reading: number;
+  saved: number;
+  finished: number;
+  average_rating: number;
+}
+
+export interface ProfileStat {
+  label: string;
+  value: string;
+}
+
+export interface ReadingProgressItem {
+  id: number;
+  title: string;
+  progress: number;
+}
+
+export interface ActivityItem {
+  id: number;
+  title: string;
+  action: string;
+  href: string;
+}
+
+export interface UserProfileResponse {
+  name: string;
+  email: string;
+  plan: string;
+  avatar: string | null;
+  member_since: string;
+  library_status: string;
+  reading_mode: string;
+  preferences: string[];
+  stats: ProfileStat[];
+  favorite_books: Book[];
+  recent_books: Book[];
+  reading_progress: ReadingProgressItem[];
+  suggested_book: Book | null;
+  recent_activity: ActivityItem[];
+}
+
+export async function getUserProfile(): Promise<UserProfileResponse> {
+  const response = await fetch(`${API_BASE_URL}/profile`, {
+    cache: "no-store",
+  });
+
+  return handleJsonResponse<UserProfileResponse>(response);
 }
 
 async function handleJsonResponse<T>(response: Response): Promise<T> {
@@ -148,4 +199,20 @@ export async function getLibraryItemByBookId(
   }
 
   return handleJsonResponse<LibraryItem>(response);
+}
+
+export async function getLibraryItems(): Promise<LibraryItem[]> {
+  const response = await fetch(`${API_BASE_URL}/library`, {
+    cache: "no-store",
+  });
+
+  return handleJsonResponse<LibraryItem[]>(response);
+}
+
+export async function getLibrarySummary(): Promise<LibrarySummary> {
+  const response = await fetch(`${API_BASE_URL}/library/summary`, {
+    cache: "no-store",
+  });
+
+  return handleJsonResponse<LibrarySummary>(response);
 }

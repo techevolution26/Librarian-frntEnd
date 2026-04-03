@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Book } from "@/lib/types";
+import type { Book } from "@/lib/types";
 
 type BookCardSize = "sm" | "md" | "lg";
 

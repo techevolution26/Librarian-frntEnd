@@ -3,17 +3,18 @@
 import Hero from "@/components/Hero";
 import Row from "@/components/Row";
 import { useDashboardSearch } from "@/store/useDashboardSearch";
+import type { Book } from "@/lib/types";
 
-interface Book {
-    id: string;
-    title: string;
-    author: string;
-    description: string;
-    genre: string[];
-    cover: string;
-    rating: number;
-    pages: number;
-}
+// interface Book {
+//     id: string;
+//     title: string;
+//     author: string;
+//     description: string;
+//     genre: string[];
+//     cover: string;
+//     rating: number;
+//     pages: number;
+// }
 
 export default function BookLibrary({ allBooks }: { allBooks: Book[] }) {
     const query = useDashboardSearch((state) => state.query).toLowerCase();
@@ -23,7 +24,6 @@ export default function BookLibrary({ allBooks }: { allBooks: Book[] }) {
         return haystack.includes(query);
     });
 
-    // Use the filtered list for your rows
     return (
         <div className="mt-10 space-y-10">
             <Hero book={filteredBooks[0] || allBooks[0]} />

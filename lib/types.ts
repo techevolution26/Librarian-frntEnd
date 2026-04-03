@@ -1,17 +1,15 @@
 export interface Book {
-  id: string;
+  id: number;
   title: string;
   author: string;
   cover: string;
   description: string;
-  genre: string[];
   rating: number;
   pages: number;
-  current_page?: number;
-  total_pages?: number;
-  progress?: number;
-  bookmark_page?: number;
-  save_progress?: boolean;
+  genre: string[];
+  source_type?: "text" | "pdf" | string;
+  source_url: string | null;
+  mime_type?: string | null;
 }
 
 export type LibraryStatus = "reading" | "saved" | "finished";

@@ -1,19 +1,18 @@
+// app/(dashboard)/library/LibraryPageClient.tsx
 "use client";
 
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import BookCard from "@/components/BookCard";
-import type { LibraryBook } from "@/lib/types";
 import { filterBooks } from "@/lib/filter-books";
-import {
-    getAverageRating,
-    getLibraryCounts,
-    getReadingBooks,
-    getSectionBooks,
-    libraryBooks,
-    librarySectionConfigs,
-    type LibrarySectionKey,
-} from "@/lib/library";
+import type { LibraryItem, LibrarySummary } from "@/lib/api";
+
+type LibrarySectionKey = "all" | "reading" | "saved" | "finished";
+
+interface LibraryPageClientProps {
+    initialItems: LibraryItem[];
+    initialSummary: LibrarySummary;
+}
 
 interface StatCardProps {
     label: string;
@@ -23,11 +22,50 @@ interface StatCardProps {
 
 interface ShelfProps {
     title: string;
-    books: LibraryBook[];
+    items: LibraryItem[];
     emptyLabel: string;
     size?: "sm" | "md" | "lg";
     tone?: "default" | "featured";
 }
+
+interface SectionConfig {
+    key: LibrarySectionKey;
+    title: string;
+    emptyLabel: string;
+    size: "sm" | "md" | "lg";
+    tone?: "default" | "featured";
+}
+
+const sectionConfigs: SectionConfig[] = [
+    {
+        key: "all",
+        title: "All Books",
+        emptyLabel: "Everything currently in your library.",
+        size: "md",
+        tone: "default",
+    },
+    {
+        key: "reading",
+        title: "Currently Reading",
+        emptyLabel: "Books you are actively reading right now.",
+        size: "lg",
+        tone: "featured",
+    },
+    {
+        key: "saved",
+        title: "Saved for Later",
+        emptyLabel: "Books you have bookmarked or want to start.",
+        size: "md",
+        tone: "default",
+    },
+    {
+        key: "finished",
+        title: "Finished",
+        emptyLabel: "Books you have completed.",
+        size: "sm",
+        tone: "default",
+    },
+];
 
 function StatCard({ label, value, hint }: StatCardProps) {
     return (
@@ -39,9 +77,18 @@ function StatCard({ label, value, hint }: StatCardProps) {
     );
 }
 
+function formatLastRead(value?: string | null): string {
+    if (!value) return "Not opened yet";
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Recently updated";
+
+    return `Last read ${date.toLocaleDateString()}`;
+}
+
 function Shelf({
     title,
-    books,
+    items,
     emptyLabel,
     size = "md",
     tone = "default",
@@ -59,15 +106,49 @@ function Shelf({
                     <p className="mt-1 text-sm text-white/55">{emptyLabel}</p>
                 </div>
                 <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-white/60">
-                    {books.length} books
+                    {items.length} books
                 </span>
             </div>
 
-            {books.length > 0 ? (
-                <div className="flex gap-4 overflow-x-auto pb-2 pr-2">
-                    {books.map((book) => (
-                        <BookCard key={book.id} book={book} size={size} />
-                    ))}
+            {items.length > 0 ? (
+                <div className="space-y-4">
+                    <div className="flex gap-4 overflow-x-auto pb-2 pr-2">
+                        {items.map((item) => (
+                            <BookCard key={item.book.id} book={item.book} size={size} />
+                        ))}
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-2">
+                        {items.map((item) => (
+                            <div
+                                key={item.id}
+                                className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3"
+                            >
+                                <div className="flex items-center justify-between gap-3">
+                                    <p className="text-sm font-medium text-white">{item.book.title}</p>
+                                    <span className="text-xs text-white/50">{item.status}</span>
+                                </div>
+
+                                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/55">
+                                    <span>{item.progress}% progress</span>
+                                    {item.current_page ? (
+                                        <span>Page {item.current_page}</span>
+                                    ) : null}
+                                    {item.bookmark_page ? (
+                                        <span>Bookmark p.{item.bookmark_page}</span>
+                                    ) : null}
+                                    <span>{formatLastRead(item.last_read_at)}</span>
+                                </div>
+
+                                <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
+                                    <div
+                                        className="h-full rounded-full bg-white/80"
+                                        style={{ width: `${item.progress}%` }}
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             ) : (
                 <div className="rounded-3xl border border-dashed border-white/10 bg-white/[0.03] p-8 text-sm text-white/50">
@@ -78,47 +159,84 @@ function Shelf({
     );
 }
 
-export default function LibraryPageClient() {
+function getSectionItems(
+    items: LibraryItem[],
+    key: LibrarySectionKey,
+): LibraryItem[] {
+    if (key === "all") return items;
+    return items.filter((item) => item.status === key);
+}
+
+export default function LibraryPageClient({
+    initialItems,
+    initialSummary,
+}: LibraryPageClientProps) {
     const searchParams = useSearchParams();
     const query = searchParams.get("q") ?? "";
 
     const [activeSection, setActiveSection] = useState<LibrarySectionKey>("all");
 
-    const filteredLibraryBooks = useMemo(
-        () => filterBooks(libraryBooks, query),
-        [query],
-    );
+    const filteredItems = useMemo(() => {
+        const filteredBooks = filterBooks(
+            initialItems.map((item) => item.book),
+            query,
+        );
 
-    const counts = useMemo(
-        () => getLibraryCounts(filteredLibraryBooks),
-        [filteredLibraryBooks],
-    );
+        const allowedIds = new Set(filteredBooks.map((book) => book.id));
 
-    const avgRating = useMemo(
-        () => getAverageRating(filteredLibraryBooks),
-        [filteredLibraryBooks],
-    );
+        return initialItems.filter((item) => allowedIds.has(item.book.id));
+    }, [initialItems, query]);
 
-    const readingBooks = useMemo(
-        () => getReadingBooks(filteredLibraryBooks),
-        [filteredLibraryBooks],
+    const counts = useMemo(() => {
+        return {
+            all: filteredItems.length,
+            reading: filteredItems.filter((item) => item.status === "reading").length,
+            saved: filteredItems.filter((item) => item.status === "saved").length,
+            finished: filteredItems.filter((item) => item.status === "finished").length,
+        };
+    }, [filteredItems]);
+
+    const averageRating = useMemo(() => {
+        if (!filteredItems.length) return "0.0";
+
+        const total = filteredItems.reduce(
+            (sum, item) => sum + item.book.rating,
+            0,
+        );
+
+        return (total / filteredItems.length).toFixed(1);
+    }, [filteredItems]);
+
+    const readingItems = useMemo(
+        () => filteredItems.filter((item) => item.status === "reading"),
+        [filteredItems],
     );
 
     const visibleSections = useMemo(() => {
         if (activeSection === "all") {
-            return librarySectionConfigs.map((section) => ({
+            return sectionConfigs.map((section) => ({
                 ...section,
-                books: getSectionBooks(filteredLibraryBooks, section.key),
+                items: getSectionItems(filteredItems, section.key),
             }));
         }
 
-        return librarySectionConfigs
+        return sectionConfigs
             .filter((section) => section.key === activeSection)
             .map((section) => ({
                 ...section,
-                books: getSectionBooks(filteredLibraryBooks, section.key),
+                items: getSectionItems(filteredItems, section.key),
             }));
-    }, [activeSection, filteredLibraryBooks]);
+    }, [activeSection, filteredItems]);
+
+    const summaryForHints = query
+        ? {
+            all: counts.all,
+            reading: counts.reading,
+            saved: counts.saved,
+            finished: counts.finished,
+            average_rating: Number(averageRating),
+        }
+        : initialSummary;
 
     return (
         <div className="space-y-8">
@@ -131,8 +249,8 @@ export default function LibraryPageClient() {
                         Your Library
                     </h1>
                     <p className="mt-4 max-w-2xl text-sm leading-7 text-white/70 sm:text-base">
-                        Browse all your books from one source of truth and switch between
-                        reading states without hardcoded shelves.
+                        Browse all your books from one source of truth and track reading state,
+                        progress, bookmarks, and last-read activity from the backend.
                     </p>
 
                     {query ? (
@@ -147,23 +265,23 @@ export default function LibraryPageClient() {
             <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <StatCard
                     label="All books"
-                    value={String(counts.all)}
-                    hint="Everything currently in your filtered library."
+                    value={String(summaryForHints.all)}
+                    hint="Everything currently in your library."
                 />
                 <StatCard
                     label="Currently reading"
-                    value={String(counts.reading)}
+                    value={String(summaryForHints.reading)}
                     hint="Books with active reading progress."
                 />
                 <StatCard
                     label="Saved"
-                    value={String(counts.saved)}
+                    value={String(summaryForHints.saved)}
                     hint="Books queued for later."
                 />
                 <StatCard
                     label="Average rating"
-                    value={avgRating}
-                    hint="Average rating across filtered results."
+                    value={String(summaryForHints.average_rating)}
+                    hint="Average rating across your library."
                 />
             </section>
 
@@ -202,18 +320,23 @@ export default function LibraryPageClient() {
                         Reading progress
                     </p>
                     <div className="mt-4 space-y-4">
-                        {readingBooks.length > 0 ? (
-                            readingBooks.map((book) => (
-                                <div key={book.id}>
+                        {readingItems.length > 0 ? (
+                            readingItems.map((item) => (
+                                <div key={item.id}>
                                     <div className="mb-2 flex items-center justify-between text-sm text-white/70">
-                                        <span>{book.title}</span>
-                                        <span>{book.progress ?? 0}%</span>
+                                        <span>{item.book.title}</span>
+                                        <span>{item.progress}%</span>
                                     </div>
                                     <div className="h-2 overflow-hidden rounded-full bg-white/10">
                                         <div
                                             className="h-full rounded-full bg-white/80"
-                                            style={{ width: `${book.progress ?? 0}%` }}
+                                            style={{ width: `${item.progress}%` }}
                                         />
+                                    </div>
+                                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-white/50">
+                                        {item.current_page ? <span>Current page {item.current_page}</span> : null}
+                                        {item.bookmark_page ? <span>Bookmark p.{item.bookmark_page}</span> : null}
+                                        <span>{formatLastRead(item.last_read_at)}</span>
                                     </div>
                                 </div>
                             ))
@@ -232,15 +355,27 @@ export default function LibraryPageClient() {
                     <ul className="mt-4 space-y-4 text-sm text-white/70">
                         <li className="flex items-start justify-between gap-4">
                             <span>Longest streak</span>
-                            <span className="font-medium text-white">7 days</span>
+                            <span className="font-medium text-white">
+                                {readingItems.length ? `${readingItems.length} active` : "0 active"}
+                            </span>
                         </li>
                         <li className="flex items-start justify-between gap-4">
                             <span>Most read genre</span>
-                            <span className="font-medium text-white">Productivity</span>
+                            <span className="font-medium text-white">
+                                {filteredItems[0]?.book.genre?.[0] ?? "—"}
+                            </span>
                         </li>
                         <li className="flex items-start justify-between gap-4">
                             <span>Pages read</span>
-                            <span className="font-medium text-white">1,284</span>
+                            <span className="font-medium text-white">
+                                {filteredItems
+                                    .reduce((sum, item) => {
+                                        const pages = item.book.pages ?? 0;
+                                        const progress = item.progress ?? 0;
+                                        return sum + Math.round((pages * progress) / 100);
+                                    }, 0)
+                                    .toLocaleString()}
+                            </span>
                         </li>
                     </ul>
                 </div>
@@ -277,7 +412,7 @@ export default function LibraryPageClient() {
                     <Shelf
                         key={section.key}
                         title={section.title}
-                        books={section.books}
+                        items={section.items}
                         emptyLabel={section.emptyLabel}
                         size={section.size}
                         tone={section.tone}
@@ -285,7 +420,7 @@ export default function LibraryPageClient() {
                 ))}
             </div>
 
-            {filteredLibraryBooks.length === 0 ? (
+            {filteredItems.length === 0 ? (
                 <section className="rounded-3xl border border-dashed border-white/10 bg-white/[0.03] p-8 text-sm text-white/50">
                     No library books match your search.
                 </section>

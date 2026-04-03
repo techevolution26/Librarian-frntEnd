@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import BookCard from "@/components/BookCard";
-import { getUserProfile } from "@/lib/profile";
+import { getUserProfile } from "@/lib/api";
+import { mapUserProfile } from "@/lib/profile";
 
 interface StatCardProps {
     label: string;
@@ -19,8 +20,9 @@ function StatCard({ label, value }: StatCardProps) {
     );
 }
 
-export default function ProfilePage() {
-    const profile = getUserProfile();
+export default async function ProfilePage() {
+    const profileResponse = await getUserProfile();
+    const profile = mapUserProfile(profileResponse);
 
     return (
         <div className="space-y-8">
@@ -118,20 +120,24 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="mt-6 space-y-5">
-                        {profile.readingProgress.map((item) => (
-                            <div key={item.id}>
-                                <div className="mb-2 flex items-center justify-between text-sm text-white/70">
-                                    <span>{item.title}</span>
-                                    <span>{item.progress}%</span>
+                        {profile.readingProgress.length > 0 ? (
+                            profile.readingProgress.map((item) => (
+                                <div key={item.id}>
+                                    <div className="mb-2 flex items-center justify-between text-sm text-white/70">
+                                        <span>{item.title}</span>
+                                        <span>{item.progress}%</span>
+                                    </div>
+                                    <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                                        <div
+                                            className="h-full rounded-full bg-white/80"
+                                            style={{ width: `${item.progress}%` }}
+                                        />
+                                    </div>
                                 </div>
-                                <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                                    <div
-                                        className="h-full rounded-full bg-white/80"
-                                        style={{ width: `${item.progress}%` }}
-                                    />
-                                </div>
-                            </div>
-                        ))}
+                            ))
+                        ) : (
+                            <p className="text-sm text-white/55">No reading progress yet.</p>
+                        )}
                     </div>
                 </div>
 
