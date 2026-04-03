@@ -1,8 +1,7 @@
 // lib/library.ts
-import { books } from "@/lib/data";
-import type { LibraryBook, LibraryStatus } from "@/lib/types";
+import type { LibraryItem } from "@/lib/api";
 
-export type LibrarySectionKey = "all" | LibraryStatus;
+export type LibrarySectionKey = "all" | "reading" | "saved" | "finished";
 
 export interface LibrarySectionConfig {
     key: LibrarySectionKey;
@@ -18,32 +17,6 @@ export interface LibraryCounts {
     saved: number;
     finished: number;
 }
-
-export const libraryBooks: LibraryBook[] = books.map((book, index) => {
-    if (index < 4) {
-        return {
-            ...book,
-            status: "reading",
-            progress: [78, 42, 91, 24][index] ?? 0,
-        };
-    }
-
-    if (index < 8) {
-        return {
-            ...book,
-            status: "saved",
-            progress: 0,
-            addedAt: "2026-03-20",
-        };
-    }
-
-    return {
-        ...book,
-        status: "finished",
-        progress: 100,
-        finishedAt: "2026-03-10",
-    };
-});
 
 export const librarySectionConfigs: LibrarySectionConfig[] = [
     {
@@ -76,30 +49,60 @@ export const librarySectionConfigs: LibrarySectionConfig[] = [
     },
 ];
 
-export function getSectionBooks(
-    allBooks: LibraryBook[],
+export function getSectionItems(
+    items: LibraryItem[],
     key: LibrarySectionKey,
-): LibraryBook[] {
-    if (key === "all") return allBooks;
-    return allBooks.filter((book) => book.status === key);
+): LibraryItem[] {
+    if (key === "all") return items;
+    return items.filter((item) => item.status === key);
 }
 
-export function getLibraryCounts(allBooks: LibraryBook[]): LibraryCounts {
+export function getLibraryCounts(items: LibraryItem[]): LibraryCounts {
     return {
-        all: allBooks.length,
-        reading: allBooks.filter((book) => book.status === "reading").length,
-        saved: allBooks.filter((book) => book.status === "saved").length,
-        finished: allBooks.filter((book) => book.status === "finished").length,
+        all: items.length,
+        reading: items.filter((item) => item.status === "reading").length,
+        saved: items.filter((item) => item.status === "saved").length,
+        finished: items.filter((item) => item.status === "finished").length,
     };
 }
 
-export function getAverageRating(allBooks: LibraryBook[]): string {
-    if (allBooks.length === 0) return "0.0";
+export function getAverageRating(items: LibraryItem[]): string {
+    if (items.length === 0) return "0.0";
 
-    const total = allBooks.reduce((sum, book) => sum + book.rating, 0);
-    return (total / allBooks.length).toFixed(1);
+    const total = items.reduce((sum, item) => sum + item.book.rating, 0);
+    return (total / items.length).toFixed(1);
 }
 
-export function getReadingBooks(allBooks: LibraryBook[]): LibraryBook[] {
-    return allBooks.filter((book) => book.status === "reading");
+export function getReadingItems(items: LibraryItem[]): LibraryItem[] {
+    return items.filter((item) => item.status === "reading");
+}
+
+export function getPagesRead(items: LibraryItem[]): number {
+    return items.reduce((sum, item) => {
+        const pages = item.book.pages ?? 0;
+        const progress = item.progress ?? 0;
+        return sum + Math.round((pages * progress) / 100);
+    }, 0);
+}
+
+export function getTopGenre(items: LibraryItem[]): string {
+    const counts = new Map<string, number>();
+
+    items.forEach((item) => {
+        item.book.genre.forEach((genre) => {
+            counts.set(genre, (counts.get(genre) ?? 0) + 1);
+        });
+    });
+
+    let topGenre = "—";
+    let topCount = 0;
+
+    counts.forEach((count, genre) => {
+        if (count > topCount) {
+            topGenre = genre;
+            topCount = count;
+        }
+    });
+
+    return topGenre;
 }

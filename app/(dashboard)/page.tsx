@@ -1,17 +1,17 @@
 import Hero from "@/components/Hero";
 import Row from "@/components/Row";
-import { books } from "@/lib/data";
+import { Book } from "@/lib/types";
 
 export default function Home() {
-  const featuredBook = books[0];
-  const trendingBooks = books.slice(0, 6);
-  const newReleases = books.slice(0, 6);
-  const continueReading = books.slice(0, 4);
+  // const featuredBook = books[0];
+  // const trendingBooks = books.slice(0, 6);
+  // const newReleases = books.slice(0, 6);
+  // const continueReading = books.slice(0, 4);
 
   return (
     <>
       <section className="grid gap-6 xl:grid-cols-[1.5fr_0.9fr]">
-        <Hero book={featuredBook} />
+        {/* <Hero book={featuredBook} /> */}
 
         <aside className="grid gap-4">
           <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur">
@@ -72,9 +72,9 @@ export default function Home() {
       </section>
 
       <section className="space-y-8">
-        <Row title="Continue Reading" books={continueReading} />
-        <Row title="Trending Now" books={trendingBooks} />
-        <Row title="New Releases" books={newReleases} />
+        {/* <Row title="Continue Reading" books={continueReading} /> */}
+        {/* <Row title="Trending Now" books={trendingBooks} /> */}
+        {/* <Row title="New Releases" books={newReleases} /> */}
       </section>
     </>
   );

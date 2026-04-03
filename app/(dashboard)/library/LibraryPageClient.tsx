@@ -6,6 +6,15 @@ import { useSearchParams } from "next/navigation";
 import BookCard from "@/components/BookCard";
 import { filterBooks } from "@/lib/filter-books";
 import type { LibraryItem, LibrarySummary } from "@/lib/api";
+import {
+    getAverageRating,
+    getLibraryCounts,
+    librarySectionConfigs,
+    getPagesRead,
+    getReadingItems,
+    getSectionItems,
+    getTopGenre,
+} from "@/lib/library";
 
 type LibrarySectionKey = "all" | "reading" | "saved" | "finished";
 
@@ -131,12 +140,8 @@ function Shelf({
 
                                 <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/55">
                                     <span>{item.progress}% progress</span>
-                                    {item.current_page ? (
-                                        <span>Page {item.current_page}</span>
-                                    ) : null}
-                                    {item.bookmark_page ? (
-                                        <span>Bookmark p.{item.bookmark_page}</span>
-                                    ) : null}
+                                    {item.current_page ? <span>Page {item.current_page}</span> : null}
+                                    {item.bookmark_page ? <span>Bookmark p.{item.bookmark_page}</span> : null}
                                     <span>{formatLastRead(item.last_read_at)}</span>
                                 </div>
 
@@ -159,14 +164,6 @@ function Shelf({
     );
 }
 
-function getSectionItems(
-    items: LibraryItem[],
-    key: LibrarySectionKey,
-): LibraryItem[] {
-    if (key === "all") return items;
-    return items.filter((item) => item.status === key);
-}
-
 export default function LibraryPageClient({
     initialItems,
     initialSummary,
@@ -187,40 +184,37 @@ export default function LibraryPageClient({
         return initialItems.filter((item) => allowedIds.has(item.book.id));
     }, [initialItems, query]);
 
-    const counts = useMemo(() => {
-        return {
-            all: filteredItems.length,
-            reading: filteredItems.filter((item) => item.status === "reading").length,
-            saved: filteredItems.filter((item) => item.status === "saved").length,
-            finished: filteredItems.filter((item) => item.status === "finished").length,
-        };
-    }, [filteredItems]);
+    const counts = useMemo(() => getLibraryCounts(filteredItems), [filteredItems]);
 
-    const averageRating = useMemo(() => {
-        if (!filteredItems.length) return "0.0";
-
-        const total = filteredItems.reduce(
-            (sum, item) => sum + item.book.rating,
-            0,
-        );
-
-        return (total / filteredItems.length).toFixed(1);
-    }, [filteredItems]);
+    const averageRating = useMemo(
+        () => getAverageRating(filteredItems),
+        [filteredItems],
+    );
 
     const readingItems = useMemo(
-        () => filteredItems.filter((item) => item.status === "reading"),
+        () => getReadingItems(filteredItems),
+        [filteredItems],
+    );
+
+    const pagesRead = useMemo(
+        () => getPagesRead(filteredItems),
+        [filteredItems],
+    );
+
+    const topGenre = useMemo(
+        () => getTopGenre(filteredItems),
         [filteredItems],
     );
 
     const visibleSections = useMemo(() => {
         if (activeSection === "all") {
-            return sectionConfigs.map((section) => ({
+            return librarySectionConfigs.map((section) => ({
                 ...section,
                 items: getSectionItems(filteredItems, section.key),
             }));
         }
 
-        return sectionConfigs
+        return librarySectionConfigs
             .filter((section) => section.key === activeSection)
             .map((section) => ({
                 ...section,
@@ -361,20 +355,12 @@ export default function LibraryPageClient({
                         </li>
                         <li className="flex items-start justify-between gap-4">
                             <span>Most read genre</span>
-                            <span className="font-medium text-white">
-                                {filteredItems[0]?.book.genre?.[0] ?? "—"}
-                            </span>
+                            <span className="font-medium text-white">{topGenre}</span>
                         </li>
                         <li className="flex items-start justify-between gap-4">
                             <span>Pages read</span>
                             <span className="font-medium text-white">
-                                {filteredItems
-                                    .reduce((sum, item) => {
-                                        const pages = item.book.pages ?? 0;
-                                        const progress = item.progress ?? 0;
-                                        return sum + Math.round((pages * progress) / 100);
-                                    }, 0)
-                                    .toLocaleString()}
+                                {pagesRead.toLocaleString()}
                             </span>
                         </li>
                     </ul>
