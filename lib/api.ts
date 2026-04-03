@@ -81,21 +81,57 @@ export interface UserProfileResponse {
   library_status: string;
   reading_mode: string;
   preferences: string[];
-  stats: ProfileStat[];
+  stats: { label: string; value: string }[];
   favorite_books: Book[];
   recent_books: Book[];
-  reading_progress: ReadingProgressItem[];
+  reading_progress: { id: number; title: string; progress: number }[];
   suggested_book: Book | null;
-  recent_activity: ActivityItem[];
+  recent_activity: { id: number; title: string; action: string; href: string }[];
 }
 
-export async function getUserProfile(): Promise<UserProfileResponse> {
-  const response = await fetch(`${API_BASE_URL}/profile`, {
-    cache: "no-store",
-  });
-
-  return handleJsonResponse<UserProfileResponse>(response);
+export interface UserSettingsResponse {
+  account: {
+    full_name: string;
+    email: string;
+    plan: string;
+  };
+  appearance: {
+    theme: string;
+    density: string;
+    reading_mode: string;
+  };
+  reading: {
+    font_size: string;
+    line_height: string;
+    auto_bookmark: boolean;
+    show_progress_bar: boolean;
+  };
+  notifications: {
+    email_updates: boolean;
+    reading_reminders: boolean;
+    product_announcements: boolean;
+  };
+  privacy: {
+    profile_visibility: string;
+    share_reading_activity: boolean;
+  };
 }
+
+export interface UpdateUserSettingsPayload {
+  theme?: string;
+  density?: string;
+  reading_mode?: string;
+  font_size?: string;
+  line_height?: string;
+  auto_bookmark?: boolean;
+  show_progress_bar?: boolean;
+  email_updates?: boolean;
+  reading_reminders?: boolean;
+  product_announcements?: boolean;
+  profile_visibility?: string;
+  share_reading_activity?: boolean;
+}
+
 
 async function handleJsonResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -106,6 +142,41 @@ async function handleJsonResponse<T>(response: Response): Promise<T> {
   }
 
   return response.json() as Promise<T>;
+}
+
+export async function getUserProfile(): Promise<UserProfileResponse> {
+  const response = await fetch(`${API_BASE_URL}/profile`, {
+    cache: "no-store",
+  });
+
+  return handleJsonResponse<UserProfileResponse>(response);
+}
+
+export async function updateUserProfile(payload: {
+  full_name?: string;
+  email?: string;
+}): Promise<UserProfileResponse> {
+  const response = await fetch(`${API_BASE_URL}/profile/`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return handleJsonResponse<UserProfileResponse>(response);
+}
+
+export async function uploadAvatar(file: File): Promise<UserProfileResponse> {
+  const formData = new FormData();
+  formData.append("avatar_file", file);
+
+  const response = await fetch(`${API_BASE_URL}/profile/avatar`, {
+    method: "POST",
+    body: formData,
+  });
+
+  return handleJsonResponse<UserProfileResponse>(response);
 }
 
 export async function getBooks(): Promise<Book[]> {
@@ -215,4 +286,27 @@ export async function getLibrarySummary(): Promise<LibrarySummary> {
   });
 
   return handleJsonResponse<LibrarySummary>(response);
+}
+
+
+export async function getUserSettings(): Promise<UserSettingsResponse> {
+  const response = await fetch(`${API_BASE_URL}/settings/`, {
+    cache: "no-store",
+  });
+
+  return handleJsonResponse<UserSettingsResponse>(response);
+}
+
+export async function updateUserSettings(
+  payload: UpdateUserSettingsPayload,
+): Promise<UserSettingsResponse> {
+  const response = await fetch(`${API_BASE_URL}/settings/`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return handleJsonResponse<UserSettingsResponse>(response);
 }

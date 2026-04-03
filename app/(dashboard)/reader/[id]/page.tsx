@@ -84,7 +84,7 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
           />
         )}
 
-        <section className="grid gap-4 sm:grid-cols-3">
+        {/* <section className="grid gap-4 sm:grid-cols-3">
           <button className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/85 transition hover:bg-white/10">
             Previous chapter
           </button>
@@ -94,7 +94,7 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
           <button className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/85 transition hover:bg-white/10">
             Next chapter
           </button>
-        </section>
+        </section> */}
       </div>
     );
   } catch (error) {

@@ -1,8 +1,9 @@
 // lib/settings.ts
 export type ThemeOption = "system" | "light" | "dark";
 export type DensityOption = "comfortable" | "compact";
+export type ReadingModeOption = "paged" | "scroll";
 export type FontSizeOption = "small" | "medium" | "large";
-export type LineHeightOption = "relaxed" | "comfortable" | "compact";
+export type LineHeightOption = "compact" | "comfortable" | "relaxed";
 export type VisibilityOption = "private" | "friends" | "public";
 
 export interface UserSettings {
@@ -14,7 +15,7 @@ export interface UserSettings {
   appearance: {
     theme: ThemeOption;
     density: DensityOption;
-    readingMode: "paged" | "scroll";
+    readingMode: ReadingModeOption;
   };
   reading: {
     fontSize: FontSizeOption;
@@ -33,32 +34,60 @@ export interface UserSettings {
   };
 }
 
-export function getUserSettings(): UserSettings {
+export interface UserSettingsResponse {
+  account: {
+    full_name: string;
+    email: string;
+    plan: string;
+  };
+  appearance: {
+    theme: string;
+    density: string;
+    reading_mode: string;
+  };
+  reading: {
+    font_size: string;
+    line_height: string;
+    auto_bookmark: boolean;
+    show_progress_bar: boolean;
+  };
+  notifications: {
+    email_updates: boolean;
+    reading_reminders: boolean;
+    product_announcements: boolean;
+  };
+  privacy: {
+    profile_visibility: string;
+    share_reading_activity: boolean;
+  };
+}
+
+export function mapUserSettings(input: UserSettingsResponse): UserSettings {
   return {
     account: {
-      fullName: "Tech Resolute",
-      email: "techresolute@example.com",
-      plan: "Free plan",
+      fullName: input.account.full_name,
+      email: input.account.email,
+      plan: input.account.plan,
     },
     appearance: {
-      theme: "dark",
-      density: "comfortable",
-      readingMode: "scroll",
+      theme: input.appearance.theme as ThemeOption,
+      density: input.appearance.density as DensityOption,
+      readingMode: input.appearance.reading_mode as ReadingModeOption,
     },
     reading: {
-      fontSize: "medium",
-      lineHeight: "comfortable",
-      autoBookmark: true,
-      showProgressBar: true,
+      fontSize: input.reading.font_size as FontSizeOption,
+      lineHeight: input.reading.line_height as LineHeightOption,
+      autoBookmark: input.reading.auto_bookmark,
+      showProgressBar: input.reading.show_progress_bar,
     },
     notifications: {
-      emailUpdates: true,
-      readingReminders: true,
-      productAnnouncements: false,
+      emailUpdates: input.notifications.email_updates,
+      readingReminders: input.notifications.reading_reminders,
+      productAnnouncements: input.notifications.product_announcements,
     },
     privacy: {
-      profileVisibility: "private",
-      shareReadingActivity: false,
+      profileVisibility: input.privacy.profile_visibility as VisibilityOption,
+      shareReadingActivity: input.privacy.share_reading_activity,
     },
   };
 }
