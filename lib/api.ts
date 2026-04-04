@@ -2,7 +2,7 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
 export interface Book {
-  id: number ;
+  id: number;
   title: string;
   author: string;
   cover: string;
@@ -132,20 +132,69 @@ export interface UpdateUserSettingsPayload {
   share_reading_activity?: boolean;
 }
 
+export class ApiError extends Error {
+  status: number;
+  body?: unknown;
+
+  constructor(message: string, status: number, body?: unknown) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.body = body;
+  }
+}
+
+async function parseErrorBody(response: Response): Promise<unknown> {
+  const contentType = response.headers.get("content-type") ?? "";
+
+  if (contentType.includes("application/json")) {
+    try {
+      return (await response.json()) as unknown;
+    } catch {
+      return null;
+    }
+  }
+
+  try {
+    return await response.text();
+  } catch {
+    return null;
+  }
+}
 
 async function handleJsonResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
+    const errorBody = await parseErrorBody(response);
+
     if (response.status === 404) {
-      throw new Error("NOT_FOUND");
+      throw new ApiError("NOT_FOUND", 404, errorBody);
     }
-    throw new Error(`Request failed with status ${response.status}`);
+
+    throw new ApiError(
+      `Request failed with status ${response.status}`,
+      response.status,
+      errorBody,
+    );
   }
 
-  return response.json() as Promise<T>;
+  return (await response.json()) as T;
+}
+
+async function apiFetch(
+  path: string,
+  init?: RequestInit,
+): Promise<Response> {
+  return fetch(`${API_BASE_URL}${path}`, {
+    credentials: "include",
+    ...init,
+    headers: {
+      ...(init?.headers ?? {}),
+    },
+  });
 }
 
 export async function getUserProfile(): Promise<UserProfileResponse> {
-  const response = await fetch(`${API_BASE_URL}/profile`, {
+  const response = await apiFetch("/profile", {
     cache: "no-store",
   });
 
@@ -156,7 +205,7 @@ export async function updateUserProfile(payload: {
   full_name?: string;
   email?: string;
 }): Promise<UserProfileResponse> {
-  const response = await fetch(`${API_BASE_URL}/profile/`, {
+  const response = await apiFetch("/profile/", {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -171,7 +220,7 @@ export async function uploadAvatar(file: File): Promise<UserProfileResponse> {
   const formData = new FormData();
   formData.append("avatar_file", file);
 
-  const response = await fetch(`${API_BASE_URL}/profile/avatar`, {
+  const response = await apiFetch("/profile/avatar", {
     method: "POST",
     body: formData,
   });
@@ -180,7 +229,7 @@ export async function uploadAvatar(file: File): Promise<UserProfileResponse> {
 }
 
 export async function getBooks(): Promise<Book[]> {
-  const response = await fetch(`${API_BASE_URL}/books`, {
+  const response = await apiFetch("/books", {
     cache: "no-store",
   });
 
@@ -188,7 +237,7 @@ export async function getBooks(): Promise<Book[]> {
 }
 
 export async function getBookById(id: number): Promise<Book> {
-  const response = await fetch(`${API_BASE_URL}/books/${id}`, {
+  const response = await apiFetch(`/books/${id}`, {
     cache: "no-store",
   });
 
@@ -196,19 +245,18 @@ export async function getBookById(id: number): Promise<Book> {
 }
 
 export async function getBookContent(id: number): Promise<BookContent> {
-  const response = await fetch(`${API_BASE_URL}/books/${id}/content`, {
+  const response = await apiFetch(`/books/${id}/content`, {
     cache: "no-store",
   });
 
   return handleJsonResponse<BookContent>(response);
 }
 
-
 export async function addToLibrary(
   bookId: number,
   status: "saved" | "reading" | "finished" = "saved",
 ): Promise<LibraryItem> {
-  const response = await fetch(`${API_BASE_URL}/library`, {
+  const response = await apiFetch("/library", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -223,7 +271,7 @@ export async function addToLibrary(
 }
 
 export async function startReading(bookId: number): Promise<LibraryItem> {
-  const response = await fetch(`${API_BASE_URL}/library/start-reading`, {
+  const response = await apiFetch("/library/start-reading", {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -239,21 +287,18 @@ export async function startReading(bookId: number): Promise<LibraryItem> {
 export async function savePdfProgress(
   payload: SavePdfProgressPayload,
 ): Promise<LibraryItem> {
-  const response = await fetch(
-    `${API_BASE_URL}/library/${payload.bookId}/pdf-progress`,
-    {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        current_page: payload.currentPage,
-        total_pages: payload.totalPages,
-        progress: payload.progressPercent,
-        bookmark_page: payload.bookmarkPage ?? null,
-      }),
+  const response = await apiFetch(`/library/${payload.bookId}/pdf-progress`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify({
+      current_page: payload.currentPage,
+      total_pages: payload.totalPages,
+      progress: payload.progressPercent,
+      bookmark_page: payload.bookmarkPage ?? null,
+    }),
+  });
 
   return handleJsonResponse<LibraryItem>(response);
 }
@@ -261,7 +306,7 @@ export async function savePdfProgress(
 export async function getLibraryItemByBookId(
   bookId: number,
 ): Promise<LibraryItem | null> {
-  const response = await fetch(`${API_BASE_URL}/library/${bookId}`, {
+  const response = await apiFetch(`/library/${bookId}`, {
     cache: "no-store",
   });
 
@@ -273,7 +318,7 @@ export async function getLibraryItemByBookId(
 }
 
 export async function getLibraryItems(): Promise<LibraryItem[]> {
-  const response = await fetch(`${API_BASE_URL}/library`, {
+  const response = await apiFetch("/library", {
     cache: "no-store",
   });
 
@@ -281,16 +326,15 @@ export async function getLibraryItems(): Promise<LibraryItem[]> {
 }
 
 export async function getLibrarySummary(): Promise<LibrarySummary> {
-  const response = await fetch(`${API_BASE_URL}/library/summary`, {
+  const response = await apiFetch("/library/summary", {
     cache: "no-store",
   });
 
   return handleJsonResponse<LibrarySummary>(response);
 }
 
-
 export async function getUserSettings(): Promise<UserSettingsResponse> {
-  const response = await fetch(`${API_BASE_URL}/settings/`, {
+  const response = await apiFetch("/settings/", {
     cache: "no-store",
   });
 
@@ -300,7 +344,7 @@ export async function getUserSettings(): Promise<UserSettingsResponse> {
 export async function updateUserSettings(
   payload: UpdateUserSettingsPayload,
 ): Promise<UserSettingsResponse> {
-  const response = await fetch(`${API_BASE_URL}/settings/`, {
+  const response = await apiFetch("/settings/", {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",

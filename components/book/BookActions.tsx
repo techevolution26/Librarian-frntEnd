@@ -8,12 +8,43 @@ interface BookActionsProps {
   bookId: number;
 }
 
+/**
+ * Shape of errors coming from API layer
+ */
+interface ApiError extends Error {
+  status?: number;
+  response?: {
+    status?: number;
+  };
+}
+
+/**
+ * Type guard to safely narrow unknown ApiError
+ */
+function isApiError(error: unknown): error is ApiError {
+  return typeof error === "object" && error !== null;
+}
+
 export default function BookActions({ bookId }: BookActionsProps) {
   const router = useRouter();
 
   const [isSaving, setIsSaving] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+
+  // central handler for auth redirect
+  const handleAuthError = (error: unknown): boolean => {
+    if (!isApiError(error)) return false;
+
+    const status = error.status ?? error.response?.status;
+
+    if (status === 401) {
+      router.push(`/login?redirect=/book/${bookId}`);
+      return true;
+    }
+
+    return false;
+  };
 
   const handleAddToLibrary = async () => {
     setIsSaving(true);
@@ -23,7 +54,8 @@ export default function BookActions({ bookId }: BookActionsProps) {
       await addToLibrary(bookId, "reading");
       setMessage("Added to library.");
       router.refresh();
-    } catch {
+    } catch (error: unknown) {
+      if (handleAuthError(error)) return;
       setMessage("Failed to add to library.");
     } finally {
       setIsSaving(false);
@@ -38,7 +70,8 @@ export default function BookActions({ bookId }: BookActionsProps) {
       await addToLibrary(bookId, "saved");
       setMessage("Saved for later.");
       router.refresh();
-    } catch {
+    } catch (error: unknown) {
+      if (handleAuthError(error)) return;
       setMessage("Failed to save book.");
     } finally {
       setIsSaving(false);
@@ -53,7 +86,8 @@ export default function BookActions({ bookId }: BookActionsProps) {
       await startReading(bookId);
       router.push(`/reader/${bookId}`);
       router.refresh();
-    } catch {
+    } catch (error: unknown) {
+      if (handleAuthError(error)) return;
       setMessage("Failed to start reading.");
     } finally {
       setIsStarting(false);
