@@ -1,6 +1,6 @@
-// app/(dashboard)/library/page.tsx
 import { Suspense } from "react";
 import { getLibraryItems, getLibrarySummary } from "@/lib/api";
+import { requireAccessToken } from "@/lib/server-auth";
 import LibraryPageClient from "./LibraryPageClient";
 
 function LibraryFallback() {
@@ -20,9 +20,11 @@ function LibraryFallback() {
 }
 
 export default async function LibraryPage() {
+  const token = await requireAccessToken("/library");
+
   const [items, summary] = await Promise.all([
-    getLibraryItems(),
-    getLibrarySummary(),
+    getLibraryItems(token),
+    getLibrarySummary(token),
   ]);
 
   return (

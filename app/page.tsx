@@ -1,9 +1,21 @@
-// app/page.tsx
-import { getBooks } from "@/lib/api";
 import HomePageClient from "@/components/home/HomePageClient";
+import { getBooks } from "@/lib/api";
+import type { Book } from "@/lib/types";
 
 export default async function Home() {
-  const books = await getBooks();
+  let books: Book[] = [];
+  let isServiceUnavailable = false;
 
-  return <HomePageClient books={books} />;
+  try {
+    books = await getBooks();
+  } catch (error) {
+    isServiceUnavailable = true;
+  }
+
+  return (
+    <HomePageClient
+      books={books}
+      isServiceUnavailable={isServiceUnavailable}
+    />
+  );
 }

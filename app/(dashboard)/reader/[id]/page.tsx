@@ -1,12 +1,13 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import {
+  ApiError,
   getBookById,
   getBookContent,
   getLibraryItemByBookId,
 } from "@/lib/api";
+import { requireAccessToken } from "@/lib/server-auth";
 import TextReader from "@/components/reader/TextReader";
-import PdfReader from "@/components/reader/PdfReader";
 import PdfReaderClientBridge from "@/components/reader/PdfReaderClientBridge";
 
 interface ReaderPageProps {
@@ -23,11 +24,13 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
     notFound();
   }
 
+  const token = await requireAccessToken(`/reader/${bookId}`);
+
   try {
     const [book, content, libraryItem] = await Promise.all([
       getBookById(bookId),
       getBookContent(bookId),
-      getLibraryItemByBookId(bookId),
+      getLibraryItemByBookId(bookId, token),
     ]);
 
     return (
@@ -83,22 +86,14 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
             }
           />
         )}
-
-        {/* <section className="grid gap-4 sm:grid-cols-3">
-          <button className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/85 transition hover:bg-white/10">
-            Previous chapter
-          </button>
-          <button className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/85 transition hover:bg-white/10">
-            Bookmark page
-          </button>
-          <button className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/85 transition hover:bg-white/10">
-            Next chapter
-          </button>
-        </section> */}
       </div>
     );
   } catch (error) {
-    if (error instanceof Error && error.message === "NOT_FOUND") {
+    if (error instanceof ApiError && error.status === 401) {
+      redirect(`/login?next=${encodeURIComponent(`/reader/${bookId}`)}`);
+    }
+
+    if (error instanceof ApiError && error.status === 404) {
       notFound();
     }
 

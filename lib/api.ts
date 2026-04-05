@@ -132,6 +132,27 @@ export interface UpdateUserSettingsPayload {
   share_reading_activity?: boolean;
 }
 
+
+async function apiFetch(
+  path: string,
+  init?: RequestInit,
+): Promise<Response> {
+  try {
+    return await fetch(`${API_BASE_URL}${path}`, {
+      credentials: "include",
+      ...init,
+      headers: {
+        ...(init?.headers ?? {}),
+      },
+    });
+  } catch (error) {
+    throw new ApiError(
+      "Service temporarily unavailable",
+      503,
+      error instanceof Error ? error.message : null,
+    );
+  }
+}
 export class ApiError extends Error {
   status: number;
   body?: unknown;
@@ -162,6 +183,16 @@ async function parseErrorBody(response: Response): Promise<unknown> {
   }
 }
 
+function buildAuthHeaders(token: string | null): HeadersInit {
+  const headers: HeadersInit = {};
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  return headers;
+}
+
 async function handleJsonResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const errorBody = await parseErrorBody(response);
@@ -180,35 +211,30 @@ async function handleJsonResponse<T>(response: Response): Promise<T> {
   return (await response.json()) as T;
 }
 
-async function apiFetch(
-  path: string,
-  init?: RequestInit,
-): Promise<Response> {
-  return fetch(`${API_BASE_URL}${path}`, {
-    credentials: "include",
-    ...init,
-    headers: {
-      ...(init?.headers ?? {}),
-    },
-  });
-}
 
-export async function getUserProfile(): Promise<UserProfileResponse> {
+export async function getUserProfile(
+  token: string | null = null,
+): Promise<UserProfileResponse> {
   const response = await apiFetch("/profile", {
     cache: "no-store",
+    headers: buildAuthHeaders(token),
   });
 
   return handleJsonResponse<UserProfileResponse>(response);
 }
 
-export async function updateUserProfile(payload: {
-  full_name?: string;
-  email?: string;
-}): Promise<UserProfileResponse> {
+export async function updateUserProfile(
+  payload: {
+    full_name?: string;
+    email?: string;
+  },
+  token: string | null = null,
+): Promise<UserProfileResponse> {
   const response = await apiFetch("/profile/", {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
+      ...buildAuthHeaders(token),
     },
     body: JSON.stringify(payload),
   });
@@ -216,12 +242,16 @@ export async function updateUserProfile(payload: {
   return handleJsonResponse<UserProfileResponse>(response);
 }
 
-export async function uploadAvatar(file: File): Promise<UserProfileResponse> {
+export async function uploadAvatar(
+  file: File,
+  token: string | null = null,
+): Promise<UserProfileResponse> {
   const formData = new FormData();
   formData.append("avatar_file", file);
 
   const response = await apiFetch("/profile/avatar", {
     method: "POST",
+    headers: buildAuthHeaders(token),
     body: formData,
   });
 
@@ -255,11 +285,13 @@ export async function getBookContent(id: number): Promise<BookContent> {
 export async function addToLibrary(
   bookId: number,
   status: "saved" | "reading" | "finished" = "saved",
+  token: string | null = null,
 ): Promise<LibraryItem> {
   const response = await apiFetch("/library", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...buildAuthHeaders(token),
     },
     body: JSON.stringify({
       book_id: bookId,
@@ -270,11 +302,15 @@ export async function addToLibrary(
   return handleJsonResponse<LibraryItem>(response);
 }
 
-export async function startReading(bookId: number): Promise<LibraryItem> {
+export async function startReading(
+  bookId: number,
+  token: string | null = null,
+): Promise<LibraryItem> {
   const response = await apiFetch("/library/start-reading", {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
+      ...buildAuthHeaders(token),
     },
     body: JSON.stringify({
       book_id: bookId,
@@ -286,11 +322,13 @@ export async function startReading(bookId: number): Promise<LibraryItem> {
 
 export async function savePdfProgress(
   payload: SavePdfProgressPayload,
+  token: string | null = null,
 ): Promise<LibraryItem> {
   const response = await apiFetch(`/library/${payload.bookId}/pdf-progress`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
+      ...buildAuthHeaders(token),
     },
     body: JSON.stringify({
       current_page: payload.currentPage,
@@ -305,9 +343,11 @@ export async function savePdfProgress(
 
 export async function getLibraryItemByBookId(
   bookId: number,
+  token: string | null = null,
 ): Promise<LibraryItem | null> {
   const response = await apiFetch(`/library/${bookId}`, {
     cache: "no-store",
+    headers: buildAuthHeaders(token),
   });
 
   if (response.status === 404) {
@@ -317,25 +357,34 @@ export async function getLibraryItemByBookId(
   return handleJsonResponse<LibraryItem>(response);
 }
 
-export async function getLibraryItems(): Promise<LibraryItem[]> {
+export async function getLibraryItems(
+  token: string | null = null,
+): Promise<LibraryItem[]> {
   const response = await apiFetch("/library", {
     cache: "no-store",
+    headers: buildAuthHeaders(token),
   });
 
   return handleJsonResponse<LibraryItem[]>(response);
 }
 
-export async function getLibrarySummary(): Promise<LibrarySummary> {
+export async function getLibrarySummary(
+  token: string | null = null,
+): Promise<LibrarySummary> {
   const response = await apiFetch("/library/summary", {
     cache: "no-store",
+    headers: buildAuthHeaders(token),
   });
 
   return handleJsonResponse<LibrarySummary>(response);
 }
 
-export async function getUserSettings(): Promise<UserSettingsResponse> {
+export async function getUserSettings(
+  token: string | null = null,
+): Promise<UserSettingsResponse> {
   const response = await apiFetch("/settings/", {
     cache: "no-store",
+    headers: buildAuthHeaders(token),
   });
 
   return handleJsonResponse<UserSettingsResponse>(response);
@@ -343,11 +392,13 @@ export async function getUserSettings(): Promise<UserSettingsResponse> {
 
 export async function updateUserSettings(
   payload: UpdateUserSettingsPayload,
+  token: string | null = null,
 ): Promise<UserSettingsResponse> {
   const response = await apiFetch("/settings/", {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
+      ...buildAuthHeaders(token),
     },
     body: JSON.stringify(payload),
   });
