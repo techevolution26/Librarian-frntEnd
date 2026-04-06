@@ -26,6 +26,38 @@ const MIN_SCALE = 0.7;
 const MAX_SCALE = 2.4;
 const DEFAULT_SCALE = 1.05;
 
+function normalizeFileUrl(value: string): string | null {
+  const trimmed = value.trim();
+
+  if (!trimmed) return null;
+  if (trimmed.includes("<function")) return null;
+  if (trimmed === "null" || trimmed === "undefined") return null;
+
+  return trimmed;
+}
+
+function getFriendlyPdfErrorMessage(errorMessage: string, hasUsableFileUrl: boolean): string {
+  const lower = errorMessage.toLowerCase();
+
+  if (!hasUsableFileUrl) {
+    return "This book is currently not available for reading.";
+  }
+
+  if (lower.includes("404")) {
+    return "This book is currently not available.";
+  }
+
+  if (lower.includes("missing pdf") || lower.includes("failed to fetch")) {
+    return "We could not retrieve this PDF right now.";
+  }
+
+  if (lower.includes("invalid pdf")) {
+    return "This file is not available as a valid PDF.";
+  }
+
+  return "We couldn’t load this PDF right now.";
+}
+
 export default function PdfReader({
   bookId,
   fileUrl,
@@ -52,7 +84,16 @@ export default function PdfReader({
     pdfjs: typeof import("react-pdf")["pdfjs"];
   } | null>(null);
 
+  const safeFileUrl = useMemo(() => normalizeFileUrl(fileUrl), [fileUrl]);
+  const hasUsableFileUrl = Boolean(safeFileUrl);
+
   useEffect(() => {
+    if (!hasUsableFileUrl) {
+      setLoadError("This book is currently not available.");
+      setIsLoading(false);
+      return;
+    }
+
     let canceled = false;
 
     void import("react-pdf")
@@ -102,7 +143,7 @@ export default function PdfReader({
     return () => {
       canceled = true;
     };
-  }, []);
+  }, [hasUsableFileUrl]);
 
   const progressPercent = useMemo(() => {
     if (!numPages || pageNumber < 1) {
@@ -173,10 +214,13 @@ export default function PdfReader({
     setLoadError(null);
   }, []);
 
-  const onDocumentLoadError = useCallback((error: Error) => {
-    setLoadError(error.message || "Failed to load PDF.");
-    setIsLoading(false);
-  }, []);
+  const onDocumentLoadError = useCallback(
+    (error: Error) => {
+      setLoadError(getFriendlyPdfErrorMessage(error.message || "Failed to load PDF.", hasUsableFileUrl));
+      setIsLoading(false);
+    },
+    [hasUsableFileUrl],
+  );
 
   const goToPreviousPage = () => {
     setPageNumber((prev) => clampPage(prev - 1));
@@ -250,7 +294,7 @@ export default function PdfReader({
             <button
               type="button"
               onClick={goToPreviousPage}
-              disabled={pageNumber <= 1}
+              disabled={pageNumber <= 1 || !!loadError}
               className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Prev
@@ -259,7 +303,7 @@ export default function PdfReader({
             <button
               type="button"
               onClick={goToNextPage}
-              disabled={!numPages || pageNumber >= numPages}
+              disabled={!numPages || pageNumber >= numPages || !!loadError}
               className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Next
@@ -272,7 +316,8 @@ export default function PdfReader({
                 onBlur={handlePageInputCommit}
                 onKeyDown={handlePageInputKeyDown}
                 inputMode="numeric"
-                className="w-14 bg-transparent text-center text-sm text-white outline-none"
+                disabled={!!loadError}
+                className="w-14 bg-transparent text-center text-sm text-white outline-none disabled:opacity-50"
                 aria-label="Page number"
               />
               <span className="text-sm text-white/45">/ {numPages || "—"}</span>
@@ -283,7 +328,8 @@ export default function PdfReader({
                 <button
                   type="button"
                   onClick={zoomOut}
-                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10"
+                  disabled={!!loadError}
+                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   −
                 </button>
@@ -291,7 +337,8 @@ export default function PdfReader({
                 <button
                   type="button"
                   onClick={resetZoom}
-                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10"
+                  disabled={!!loadError}
+                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {Math.round(scale * 100)}%
                 </button>
@@ -299,29 +346,36 @@ export default function PdfReader({
                 <button
                   type="button"
                   onClick={zoomIn}
-                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10"
+                  disabled={!!loadError}
+                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   +
                 </button>
               </div>
 
               <div className="flex items-center gap-2">
-                <a
-                  href={fileUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10"
-                >
-                  Open
-                </a>
+                {safeFileUrl ? (
+                  <>
+                    <a
+                      href={safeFileUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10"
+                    >
+                      Open
+                    </a>
 
-                <a
-                  href={fileUrl}
-                  download
-                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10"
-                >
-                  Download
-                </a>
+                    <a
+                      href={safeFileUrl}
+                      download
+                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10"
+                    >
+                      Download
+                    </a>
+                  </>
+                ) : (
+                  <span className="text-xs text-white/45">File unavailable</span>
+                )}
               </div>
             </div>
           </div>
@@ -336,33 +390,35 @@ export default function PdfReader({
       </div>
 
       <div className="flex min-h-[60vh] items-start justify-center overflow-hidden rounded-2xl border border-white/10 bg-neutral-900 p-2 sm:min-h-[72vh] sm:p-4">
-        {!reactPdfModule ? (
+        {!reactPdfModule && !loadError ? (
           <div className="py-16 text-center text-sm text-white/60">Loading PDF…</div>
         ) : loadError ? (
           <div className="flex w-full max-w-lg flex-col items-center justify-center gap-4 py-16 text-center">
-            <p className="text-lg font-semibold text-white">Failed to load this PDF</p>
+            <p className="text-lg font-semibold text-white">Book currently unavailable</p>
             <p className="text-sm text-white/60">{loadError}</p>
-            <div className="flex flex-wrap justify-center gap-3">
-              <a
-                href={fileUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/85 transition hover:bg-white/10"
-              >
-                Open in new tab
-              </a>
-              <a
-                href={fileUrl}
-                download
-                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/85 transition hover:bg-white/10"
-              >
-                Download PDF
-              </a>
-            </div>
+            {safeFileUrl ? (
+              <div className="flex flex-wrap justify-center gap-3">
+                <a
+                  href={safeFileUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/85 transition hover:bg-white/10"
+                >
+                  Try opening in new tab
+                </a>
+                <a
+                  href={safeFileUrl}
+                  download
+                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/85 transition hover:bg-white/10"
+                >
+                  Download PDF
+                </a>
+              </div>
+            ) : null}
           </div>
         ) : (
           <DocumentComponent
-            file={fileUrl}
+            file={safeFileUrl as string}
             onLoadSuccess={onDocumentLoadSuccess}
             onLoadError={onDocumentLoadError}
             loading={
@@ -388,7 +444,7 @@ export default function PdfReader({
         <button
           type="button"
           onClick={goToPreviousPage}
-          disabled={pageNumber <= 1}
+          disabled={pageNumber <= 1 || !!loadError}
           className="min-h-12 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Previous page
@@ -397,7 +453,8 @@ export default function PdfReader({
         <button
           type="button"
           onClick={handleBookmark}
-          className="min-h-12 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10"
+          disabled={!!loadError}
+          className="min-h-12 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {bookmarkPage === pageNumber ? "Remove bookmark" : "Bookmark page"}
         </button>
@@ -405,7 +462,7 @@ export default function PdfReader({
         <button
           type="button"
           onClick={goToNextPage}
-          disabled={!numPages || pageNumber >= numPages}
+          disabled={!numPages || pageNumber >= numPages || !!loadError}
           className="min-h-12 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 sm:col-span-2 xl:col-span-1"
         >
           Next page
@@ -413,8 +470,16 @@ export default function PdfReader({
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-white/50">
-        <span>{isLoading ? "Preparing document…" : `${numPages || 0} pages total`}</span>
-        <span>{bookmarkPage ? `Bookmarked page ${bookmarkPage}` : "No bookmark saved"}</span>
+        <span>
+          {loadError
+            ? "Document unavailable"
+            : isLoading
+              ? "Preparing document…"
+              : `${numPages || 0} pages total`}
+        </span>
+        <span>
+          {bookmarkPage ? `Bookmarked page ${bookmarkPage}` : "No bookmark saved"}
+        </span>
       </div>
     </section>
   );
