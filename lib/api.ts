@@ -312,7 +312,7 @@ export async function addToLibrary(
   status: "saved" | "reading" | "finished" = "saved",
   token: string | null = null,
 ): Promise<LibraryItem> {
-  const response = await apiFetch("/library", {
+  const response = await apiFetch("/library/", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -385,7 +385,7 @@ export async function getLibraryItemByBookId(
 export async function getLibraryItems(
   token: string | null = null,
 ): Promise<LibraryItem[]> {
-  const response = await apiFetch("/library", {
+  const response = await apiFetch("/library/", {
     cache: "no-store",
     headers: buildAuthHeaders(token),
   });
