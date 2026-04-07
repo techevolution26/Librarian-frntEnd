@@ -211,6 +211,31 @@ async function handleJsonResponse<T>(response: Response): Promise<T> {
   return (await response.json()) as T;
 }
 
+export async function login(payload: {
+  email: string;
+  password: string;
+}) {
+  const response = await fetch("/api/auth/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    let message = "Login failed";
+
+    try {
+      const data = await response.json();
+      message = data.detail ?? message;
+    } catch { }
+
+    throw new Error(message);
+  }
+
+  return response.json();
+}
 
 export async function getUserProfile(
   token: string | null = null,
