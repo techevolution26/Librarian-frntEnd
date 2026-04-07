@@ -240,7 +240,7 @@ export async function login(payload: {
 export async function getUserProfile(
   token: string | null = null,
 ): Promise<UserProfileResponse> {
-  const response = await apiFetch("/profile", {
+  const response = await apiFetch("/profile/", {
     cache: "no-store",
     headers: buildAuthHeaders(token),
   });
