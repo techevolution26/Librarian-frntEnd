@@ -314,6 +314,7 @@ export async function addToLibrary(
 ): Promise<LibraryItem> {
   const response = await apiFetch("/library/", {
     method: "POST",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...buildAuthHeaders(token),
@@ -333,6 +334,7 @@ export async function startReading(
 ): Promise<LibraryItem> {
   const response = await apiFetch("/library/start-reading", {
     method: "PATCH",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...buildAuthHeaders(token),
@@ -351,6 +353,7 @@ export async function savePdfProgress(
 ): Promise<LibraryItem> {
   const response = await apiFetch(`/library/${payload.bookId}/pdf-progress`, {
     method: "PATCH",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...buildAuthHeaders(token),
