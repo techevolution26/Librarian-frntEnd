@@ -137,8 +137,11 @@ async function apiFetch(
   path: string,
   init?: RequestInit,
 ): Promise<Response> {
+  const isNextApiRoute = path.startsWith("/api/");
+  const url = isNextApiRoute ? path : `${API_BASE_URL}${path}`;
+
   try {
-    return await fetch(`${API_BASE_URL}${path}`, {
+    return await fetch(url, {
       credentials: "include",
       ...init,
       headers: {
