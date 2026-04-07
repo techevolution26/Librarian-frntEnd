@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { addToLibrary, startReading } from "@/lib/api";
+import { encode } from "punycode";
 
 interface BookActionsProps {
   bookId: number;
@@ -39,7 +40,7 @@ export default function BookActions({ bookId }: BookActionsProps) {
     const status = error.status ?? error.response?.status;
 
     if (status === 401) {
-      router.push(`/login?redirect=/book/${bookId}`);
+      router.push(`/login?next=${encodeURIComponent(`/books/${bookId}`)}`);
       return true;
     }
 
