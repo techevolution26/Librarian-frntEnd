@@ -2,42 +2,65 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 
+export const runtime = "nodejs";
+
+function getRequiredEnv(name: "GMAIL_USER" | "GMAIL_APP_PASSWORD"): string {
+    const value = process.env[name]?.trim();
+
+    if (!value) {
+        throw new Error(`Missing required environment variable: ${name}`);
+    }
+
+    return value;
+}
+
 export async function POST(request: Request) {
     try {
-        const { subject, message, email } = await request.json();
+        const body = (await request.json()) as {
+            subject?: string;
+            message?: string;
+            email?: string;
+        };
 
-        // Basic validation
+        const subject = body.subject?.trim();
+        const message = body.message?.trim();
+        const email = body.email?.trim();
+
         if (!subject || !message) {
             return NextResponse.json(
                 { error: "Subject and message are required" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
-        // Create a transporter using Gmail's SMTP
+        const gmailUser = getRequiredEnv("GMAIL_USER");
+        const gmailAppPassword = getRequiredEnv("GMAIL_APP_PASSWORD");
+
         const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
-                user: process.env.GMAIL_USER,
-                pass: process.env.GMAIL_APP_PASSWORD,
+                user: gmailUser,
+                pass: gmailAppPassword,
             },
         });
 
-        // Send the email to yourself
+        await transporter.verify();
+
         await transporter.sendMail({
-            from: `"Support Widget" <${process.env.GMAIL_USER}>`,
-            to: process.env.GMAIL_USER, // you receive the message
+            from: `"Support Widget" <${gmailUser}>`,
+            to: gmailUser,
             subject: `[Support] ${subject}`,
-            replyTo: email || undefined, // if user provided email, they can be replied to
-            text: `From: ${email || "Anonymous"}\n\n${message}`,
+            replyTo: email || undefined,
+            text: `From: ${email || "Anonymous"}\nSubject: ${subject}\n\n${message}`,
         });
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {
-        console.error("Email sending error:", error);
+        console.error("Support email error:", error);
+
         return NextResponse.json(
             { error: "Failed to send email. Please try again later." },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
