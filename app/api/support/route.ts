@@ -3,8 +3,6 @@ import { Resend } from "resend";
 
 export const runtime = "nodejs";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 function getRequiredEnv(
     name: "RESEND_API_KEY" | "SUPPORT_TO_EMAIL" | "SUPPORT_FROM_EMAIL",
 ): string {
@@ -18,7 +16,11 @@ function getRequiredEnv(
 }
 
 export async function POST(request: Request) {
+    console.log("SUPPORT_ROUTE_RESEND_V1");
+
     try {
+        const resend = new Resend(getRequiredEnv("RESEND_API_KEY"));
+
         const body = (await request.json()) as {
             subject?: string;
             message?: string;
@@ -36,11 +38,17 @@ export async function POST(request: Request) {
             );
         }
 
-        getRequiredEnv("RESEND_API_KEY");
         const to = getRequiredEnv("SUPPORT_TO_EMAIL");
         const from = getRequiredEnv("SUPPORT_FROM_EMAIL");
 
-        const { error } = await resend.emails.send({
+        console.log("Using Resend route", {
+            hasApiKey: Boolean(process.env.RESEND_API_KEY),
+            to,
+            from,
+            subject,
+        });
+
+        const result = await resend.emails.send({
             from,
             to,
             subject: `[Support] ${subject}`,
@@ -48,9 +56,10 @@ export async function POST(request: Request) {
             text: `From: ${email || "Anonymous"}\nSubject: ${subject}\n\n${message}`,
         });
 
-        if (error) {
-            console.error("Resend send error:", error);
+        console.log("Resend result", result);
 
+        if (result.error) {
+            console.error("Resend send error:", result.error);
             return NextResponse.json(
                 { error: "Failed to send email. Please try again later." },
                 { status: 500 },
@@ -60,7 +69,6 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {
         console.error("Support email error:", error);
-
         return NextResponse.json(
             { error: "Failed to send email. Please try again later." },
             { status: 500 },
