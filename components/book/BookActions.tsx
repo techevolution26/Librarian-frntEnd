@@ -40,7 +40,7 @@ export default function BookActions({ bookId }: BookActionsProps) {
     const status = error.status ?? error.response?.status;
 
     if (status === 401) {
-      router.push(`/login?next=${encodeURIComponent(`/books/${bookId}`)}`);
+      router.push(`/login?next=${encodeURIComponent(`/book/${bookId}`)}`);
       return true;
     }
 
