@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import {
   usePathname,
   useRouter,
@@ -40,6 +40,13 @@ interface DiscoverSectionProps {
   items: DiscoverBook[];
 }
 
+interface ExploreAllGridProps {
+  books: DiscoverBook[];
+}
+
+const INITIAL_VISIBLE_BOOKS = 12;
+const LOAD_MORE_STEP = 12;
+
 function FilterChip({
   children,
   active = false,
@@ -50,7 +57,7 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={[
-        "rounded-full border px-4 py-2 text-sm transition",
+        "shrink-0 rounded-full border px-4 py-2 text-sm whitespace-nowrap transition",
         active
           ? "border-white/20 bg-white text-black"
           : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white",
@@ -87,6 +94,47 @@ function DiscoverSection({
         </div>
       )}
     </section>
+  );
+}
+
+function ExploreAllGrid({ books }: ExploreAllGridProps) {
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_BOOKS);
+
+  const visibleBooks = useMemo(
+    () => books.slice(0, visibleCount),
+    [books, visibleCount],
+  );
+
+  const hasMoreBooks = visibleCount < books.length;
+
+  if (books.length === 0) {
+    return (
+      <div className="rounded-3xl border border-dashed border-white/10 bg-white/[0.03] p-8 text-sm text-white/50">
+        No books found. Try another search term, genre, or sort option.
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
+        {visibleBooks.map((book) => (
+          <BookCard key={book.id} book={book} size="md" />
+        ))}
+      </div>
+
+      {hasMoreBooks ? (
+        <div className="flex justify-center pt-2">
+          <button
+            type="button"
+            onClick={() => setVisibleCount((prev) => prev + LOAD_MORE_STEP)}
+            className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm text-white/80 transition hover:bg-white/10 hover:text-white"
+          >
+            Show more books
+          </button>
+        </div>
+      ) : null}
+    </>
   );
 }
 
@@ -141,6 +189,8 @@ export default function DiscoverPageClient({
     const byGenre = filterByGenre(searchedBooks, activeGenre);
     return sortBooks(byGenre, activeSort);
   }, [searchedBooks, activeGenre, activeSort]);
+
+  const exploreAllKey = `${query}__${activeGenre}__${activeSort}`;
 
   const recommended = useMemo(
     () => sortBooks(filteredBooks, "Recommended").slice(0, 6),
@@ -199,57 +249,87 @@ export default function DiscoverPageClient({
       </section>
 
       <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-5">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex flex-wrap items-center gap-3">
-            {availableGenres.map((genre) => (
-              <FilterChip
-                key={genre}
-                active={activeGenre === genre}
-                onClick={() => setParams({ genre })}
-              >
-                {genre}
-              </FilterChip>
-            ))}
+        <div className="space-y-4">
+          <div>
+            <p className="mb-3 text-xs uppercase tracking-[0.18em] text-white/40">
+              Browse by genre
+            </p>
+            <div className="-mx-1 overflow-x-auto pb-1">
+              <div className="flex min-w-max items-center gap-3 px-1">
+                {availableGenres.map((genre) => (
+                  <FilterChip
+                    key={genre}
+                    active={activeGenre === genre}
+                    onClick={() => setParams({ genre })}
+                  >
+                    {genre}
+                  </FilterChip>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {sortOptions.map((option) => (
-              <FilterChip
-                key={option}
-                active={activeSort === option}
-                onClick={() => setParams({ sort: option })}
-              >
-                {option}
-              </FilterChip>
-            ))}
+          <div>
+            <p className="mb-3 text-xs uppercase tracking-[0.18em] text-white/40">
+              Sort results
+            </p>
+            <div className="-mx-1 overflow-x-auto pb-1">
+              <div className="flex min-w-max items-center gap-2 px-1">
+                {sortOptions.map((option) => (
+                  <FilterChip
+                    key={option}
+                    active={activeSort === option}
+                    onClick={() => setParams({ sort: option })}
+                  >
+                    {option}
+                  </FilterChip>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5">
-          <p className="text-sm text-white/60">Visible books</p>
-          <p className="mt-2 text-3xl font-semibold">{filteredBooks.length}</p>
+      <section className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 sm:rounded-3xl sm:p-5">
+          <p className="text-xs uppercase tracking-[0.16em] text-white/45 sm:text-sm sm:tracking-normal sm:text-white/60">
+            Visible books
+          </p>
+          <p className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+            {filteredBooks.length}
+          </p>
         </div>
 
-        <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5">
-          <p className="text-sm text-white/60">Top rated</p>
-          <p className="mt-2 text-3xl font-semibold">{topRatedCount}</p>
+        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 sm:rounded-3xl sm:p-5">
+          <p className="text-xs uppercase tracking-[0.16em] text-white/45 sm:text-sm sm:tracking-normal sm:text-white/60">
+            Top rated
+          </p>
+          <p className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+            {topRatedCount}
+          </p>
         </div>
 
-        <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5">
-          <p className="text-sm text-white/60">New in results</p>
-          <p className="mt-2 text-3xl font-semibold">{newArrivals.length}</p>
+        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 sm:rounded-3xl sm:p-5">
+          <p className="text-xs uppercase tracking-[0.16em] text-white/45 sm:text-sm sm:tracking-normal sm:text-white/60">
+            New in results
+          </p>
+          <p className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+            {newArrivals.length}
+          </p>
         </div>
 
-        <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5">
-          <p className="text-sm text-white/60">Categories</p>
-          <p className="mt-2 text-3xl font-semibold">{categoriesCount}</p>
+        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 sm:rounded-3xl sm:p-5">
+          <p className="text-xs uppercase tracking-[0.16em] text-white/45 sm:text-sm sm:tracking-normal sm:text-white/60">
+            Categories
+          </p>
+          <p className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+            {categoriesCount}
+          </p>
         </div>
       </section>
 
       <section className="space-y-4">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-white">
               Explore All
@@ -270,17 +350,7 @@ export default function DiscoverPageClient({
           )}
         </div>
 
-        {filteredBooks.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6">
-            {filteredBooks.map((book) => (
-              <BookCard key={book.id} book={book} size="md" />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-3xl border border-dashed border-white/10 bg-white/[0.03] p-8 text-sm text-white/50">
-            No books found. Try another search term, genre, or sort option.
-          </div>
-        )}
+        <ExploreAllGrid key={exploreAllKey} books={filteredBooks} />
       </section>
 
       <div className="space-y-10">
