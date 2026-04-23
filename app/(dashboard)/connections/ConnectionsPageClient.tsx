@@ -44,11 +44,18 @@ export default function ConnectionsPageClient({ initialConnections }: Props) {
         }
     }
 
-    async function handleAction(id: number, action: "accept" | "decline") {
+    async function handleAction(connectionId: number | undefined, action: "accept" | "decline") {
+        if (!connectionId) {
+            setMessage("Missing connection id.");
+            return;
+        }
+
         try {
-            const updated = await actOnConnection(id, action);
+            const updated = await actOnConnection(connectionId, action);
             setConnections((prev) =>
-                prev.map((c) => (c.id === id ? updated : c)),
+                prev.map((connection) =>
+                    connection.id === connectionId ? updated : connection,
+                ),
             );
         } catch {
             setMessage("Action failed.");
@@ -99,19 +106,21 @@ export default function ConnectionsPageClient({ initialConnections }: Props) {
                 <h2 className="text-lg font-semibold">Pending</h2>
 
                 {pending.length > 0 ? (
-                    pending.map((c) => (
-                        <div key={c.id} className="mt-3 rounded-xl border p-4">
-                            <p>{c.requester.full_name} → {c.addressee.full_name}</p>
+                    pending.map((connection) => (
+                        <div key={connection.id} className="mt-3 rounded-xl border p-4">
+                            <p>{connection.requester.full_name} → {connection.addressee.full_name}</p>
 
                             <div className="mt-3 flex gap-2">
                                 <button
-                                    onClick={() => handleAction(c.id, "accept")}
+                                    type="button"
+                                    onClick={() => handleAction(connection.id, "accept")}
                                     className="rounded-lg bg-white px-3 py-1 text-black text-sm"
                                 >
                                     Accept
                                 </button>
                                 <button
-                                    onClick={() => handleAction(c.id, "decline")}
+                                    type="button"
+                                    onClick={() => handleAction(connection.id, "decline")}
                                     className="rounded-lg border px-3 py-1 text-sm"
                                 >
                                     Decline
@@ -129,10 +138,10 @@ export default function ConnectionsPageClient({ initialConnections }: Props) {
                 <h2 className="text-lg font-semibold">Accepted</h2>
 
                 {accepted.length > 0 ? (
-                    accepted.map((c) => (
-                        <div key={c.id} className="mt-3 rounded-xl border p-4">
-                            <p>{c.requester.full_name} ↔ {c.addressee.full_name}</p>
-                            <p className="text-xs text-white/50">{c.relationship_type}</p>
+                    accepted.map((connection) => (
+                        <div key={connection.id} className="mt-3 rounded-xl border p-4">
+                            <p>{connection.requester.full_name} ↔ {connection.addressee.full_name}</p>
+                            <p className="text-xs text-white/50">{connection.relationship_type}</p>
                         </div>
                     ))
                 ) : (

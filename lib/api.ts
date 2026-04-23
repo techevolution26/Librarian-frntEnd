@@ -260,6 +260,24 @@ export interface CircleProgressUpdate {
   user: CircleMemberUser;
 }
 
+export interface AcceptedConnectionUser {
+  id: number;
+  full_name: string;
+  email: string;
+  avatar_url: string | null;
+}
+
+export interface SelectableLibraryBook {
+  id: number;
+  status: "reading" | "saved" | "finished";
+  progress: number;
+  current_page: number | null;
+  bookmark_page: number | null;
+  book: Book;
+}
+
+
+
 async function apiFetch(
   path: string,
   init?: RequestInit,
@@ -710,14 +728,31 @@ export async function attachCircleBook(
   return handleJsonResponse<CircleBook>(response);
 }
 
+export async function getAcceptedConnections(
+  token?: string,
+): Promise<AcceptedConnectionUser[]> {
+  const response = await apiFetch("/connections/accepted", {
+    headers: buildAuthHeaders(token),
+  });
+
+  return handleJsonResponse<AcceptedConnectionUser[]>(response);
+}
+
+export async function getSelectableLibraryBooks(
+  token?: string,
+): Promise<SelectableLibraryBook[]> {
+  const response = await apiFetch("/library/selectable-books", {
+    headers: buildAuthHeaders(token),
+  });
+
+  return handleJsonResponse<SelectableLibraryBook[]>(response);
+}
+
 export async function createCircleProgressUpdate(
   circleId: number,
   payload: {
-    circle_book_id?: number | null;
-    library_item_id?: number | null;
-    progress_percent: number;
-    current_page?: number | null;
-    bookmark_page?: number | null;
+    circle_book_id: number;
+    library_item_id: number;
     note?: string | null;
     visibility?: "circle" | "connections";
   },
@@ -729,5 +764,6 @@ export async function createCircleProgressUpdate(
     },
     body: JSON.stringify(payload),
   });
+
   return handleJsonResponse<CircleProgressUpdate>(response);
 }
