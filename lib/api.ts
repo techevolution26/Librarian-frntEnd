@@ -132,6 +132,133 @@ export interface UpdateUserSettingsPayload {
   share_reading_activity?: boolean;
 }
 
+export interface ConnectionUser {
+  id: number;
+  full_name: string;
+  email: string;
+  avatar_url: string | null;
+}
+
+export interface UserConnection {
+  id: number;
+  status: "pending" | "accepted" | "declined" | "blocked";
+  relationship_type: "friend" | "family" | "school" | "mentor" | "other";
+  created_at: string;
+  requester: ConnectionUser;
+  addressee: ConnectionUser;
+}
+
+export interface CircleOwner {
+  id: number;
+  full_name: string;
+  avatar_url: string | null;
+}
+
+export interface Circle {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  visibility: "private" | "invite_only";
+  avatar_url: string | null;
+  owner: CircleOwner;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CircleProgressUser {
+  id: number;
+  full_name: string;
+  email: string;
+  avatar_url: string | null;
+}
+
+export interface CircleProgressUpdate {
+  id: number;
+  progress_percent: number;
+  current_page: number | null;
+  bookmark_page: number | null;
+  note: string | null;
+  visibility: "circle" | "connections";
+  created_at: string;
+  user: CircleProgressUser;
+}
+
+export interface SidebarSummary {
+  full_name: string;
+  avatar_url: string | null;
+  reading_streak_days: number;
+}
+
+export interface ConnectionUser {
+  id: number;
+  full_name: string;
+  email: string;
+  avatar_url: string | null;
+}
+
+export interface UserConnection {
+  id: number;
+  status: "pending" | "accepted" | "declined" | "blocked";
+  relationship_type: "friend" | "family" | "school" | "mentor" | "other";
+  created_at: string;
+  requester: ConnectionUser;
+  addressee: ConnectionUser;
+}
+
+export interface CircleOwner {
+  id: number;
+  full_name: string;
+  avatar_url: string | null;
+}
+
+export interface Circle {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  visibility: "private" | "invite_only";
+  avatar_url: string | null;
+  owner: CircleOwner;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CircleMemberUser {
+  id: number;
+  full_name: string;
+  email: string;
+  avatar_url: string | null;
+}
+
+export interface CircleMember {
+  id: number;
+  role: "owner" | "admin" | "member";
+  status: "invited" | "active" | "removed";
+  joined_at: string | null;
+  user: CircleMemberUser;
+}
+
+export interface CircleBook {
+  id: number;
+  title_override: string | null;
+  description: string | null;
+  start_date: string | null;
+  target_end_date: string | null;
+  status: "active" | "completed" | "archived";
+  book: Book;
+}
+
+export interface CircleProgressUpdate {
+  id: number;
+  progress_percent: number;
+  current_page: number | null;
+  bookmark_page: number | null;
+  note: string | null;
+  visibility: "circle" | "connections";
+  created_at: string;
+  user: CircleMemberUser;
+}
 
 async function apiFetch(
   path: string,
@@ -186,7 +313,7 @@ async function parseErrorBody(response: Response): Promise<unknown> {
   }
 }
 
-function buildAuthHeaders(token: string | null): HeadersInit {
+function buildAuthHeaders(token: string | null | undefined): HeadersInit {
   const headers: HeadersInit = {};
 
   if (token) {
@@ -435,4 +562,172 @@ export async function updateUserSettings(
   });
 
   return handleJsonResponse<UserSettingsResponse>(response);
+}
+
+// CONNECTIONS
+export async function getConnections(token?: string): Promise<UserConnection[]> {
+  const response = await apiFetch("/connections/", {
+    headers: buildAuthHeaders(token),
+  });
+
+  return handleJsonResponse<UserConnection[]>(response);
+}
+
+
+export async function getSidebarSummary(
+  token?: string,
+): Promise<SidebarSummary> {
+  const response = await apiFetch("/profile/sidebar-summary", {
+    headers: buildAuthHeaders(token),
+  });
+
+  return handleJsonResponse<SidebarSummary>(response);
+}
+
+export async function inviteConnection(
+  email: string,
+  relationshipType: UserConnection["relationship_type"] = "friend",
+): Promise<UserConnection> {
+  const response = await apiFetch("/api/connections/invite", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email,
+      relationship_type: relationshipType,
+    }),
+  });
+
+  return handleJsonResponse<UserConnection>(response);
+}
+
+export async function actOnConnection(
+  connectionId: number,
+  action: "accept" | "decline" | "block",
+): Promise<UserConnection> {
+  const response = await apiFetch(`/api/connections/${connectionId}/action`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ action }),
+  });
+
+  return handleJsonResponse<UserConnection>(response);
+}
+
+export async function getCircles(token?: string): Promise<Circle[]> {
+  const response = await apiFetch("/circles/", {
+    headers: buildAuthHeaders(token),
+  });
+  return handleJsonResponse<Circle[]>(response);
+}
+
+export async function getCircle(circleId: number, token?: string): Promise<Circle> {
+  const response = await apiFetch(`/circles/${circleId}`, {
+    headers: buildAuthHeaders(token),
+  });
+  return handleJsonResponse<Circle>(response);
+}
+
+export async function getCircleMembers(
+  circleId: number,
+  token?: string,
+): Promise<CircleMember[]> {
+  const response = await apiFetch(`/circles/${circleId}/members`, {
+    headers: buildAuthHeaders(token),
+  });
+  return handleJsonResponse<CircleMember[]>(response);
+}
+
+export async function getCircleBooks(
+  circleId: number,
+  token?: string,
+): Promise<CircleBook[]> {
+  const response = await apiFetch(`/circles/${circleId}/books`, {
+    headers: buildAuthHeaders(token),
+  });
+  return handleJsonResponse<CircleBook[]>(response);
+}
+
+export async function getCircleProgress(
+  circleId: number,
+  token?: string,
+): Promise<CircleProgressUpdate[]> {
+  const response = await apiFetch(`/circles/${circleId}/progress`, {
+    headers: buildAuthHeaders(token),
+  });
+  return handleJsonResponse<CircleProgressUpdate[]>(response);
+}
+
+export async function createCircle(payload: {
+  name: string;
+  description?: string;
+  visibility?: "private" | "invite_only";
+}): Promise<Circle> {
+  const response = await apiFetch("/api/circles", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  return handleJsonResponse<Circle>(response);
+}
+
+export async function inviteCircleMember(
+  circleId: number,
+  userId: number,
+): Promise<CircleMember> {
+  const response = await apiFetch(`/api/circles/${circleId}/invite`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ user_id: userId }),
+  });
+  return handleJsonResponse<CircleMember>(response);
+}
+
+export async function attachCircleBook(
+  circleId: number,
+  payload: {
+    book_id: number;
+    title_override?: string;
+    description?: string;
+    start_date?: string;
+    target_end_date?: string;
+  },
+): Promise<CircleBook> {
+  const response = await apiFetch(`/api/circles/${circleId}/books`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  return handleJsonResponse<CircleBook>(response);
+}
+
+export async function createCircleProgressUpdate(
+  circleId: number,
+  payload: {
+    circle_book_id?: number | null;
+    library_item_id?: number | null;
+    progress_percent: number;
+    current_page?: number | null;
+    bookmark_page?: number | null;
+    note?: string | null;
+    visibility?: "circle" | "connections";
+  },
+): Promise<CircleProgressUpdate> {
+  const response = await apiFetch(`/api/circles/${circleId}/progress`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  return handleJsonResponse<CircleProgressUpdate>(response);
 }

@@ -371,6 +371,22 @@ export default function LibraryPageClient({
                             View finished books
                         </button>
                     </div>
+
+                    <div className="mt-3 flex gap-2">
+                        <button
+                            className="rounded-lg border border-white/10 px-3 py-1 text-xs"
+                            onClick={() => router.push(`/circles/new?book=${item.book.id}`)}
+                        >
+                            Start group
+                        </button>
+
+                        <button
+                            className="rounded-lg border border-white/10 px-3 py-1 text-xs"
+                            onClick={() => router.push(`/connections?invite=${item.book.id}`)}
+                        >
+                            Invite friends
+                        </button>
+                    </div>
                 </div>
             </section>
 
