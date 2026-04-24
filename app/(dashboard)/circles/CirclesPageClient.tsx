@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { createCircle, type Circle } from "@/lib/api";
+import { ApiError, createCircle, type Circle } from "@/lib/api";
 
 interface Props {
     initialCircles: Circle[];
@@ -26,13 +26,18 @@ export default function CirclesPageClient({ initialCircles }: Props) {
                 description: description || undefined,
                 visibility,
             });
+
             setCircles((prev) => [created, ...prev]);
             setName("");
             setDescription("");
             setVisibility("private");
             setMessage("Circle created.");
-        } catch {
-            setMessage("Failed to create circle.");
+        } catch (error) {
+            if (error instanceof ApiError) {
+                setMessage(error.detail ?? "Failed to create circle.");
+            } else {
+                setMessage("Failed to create circle.");
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -51,14 +56,14 @@ export default function CirclesPageClient({ initialCircles }: Props) {
                         value={name}
                         onChange={(event) => setName(event.target.value)}
                         placeholder="Circle name"
-                        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+                        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-white/40"
                     />
 
                     <input
                         value={description}
                         onChange={(event) => setDescription(event.target.value)}
                         placeholder="Description"
-                        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+                        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-white/40"
                     />
 
                     <select
@@ -66,10 +71,14 @@ export default function CirclesPageClient({ initialCircles }: Props) {
                         onChange={(event) =>
                             setVisibility(event.target.value as "private" | "invite_only")
                         }
-                        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+                        className="rounded-2xl border border-white/10 bg-neutral-900 px-4 py-3 text-sm text-white outline-none"
                     >
-                        <option value="private">private</option>
-                        <option value="invite_only">invite only</option>
+                        <option value="private" className="bg-neutral-900 text-white">
+                            private
+                        </option>
+                        <option value="invite_only" className="bg-neutral-900 text-white">
+                            invite only
+                        </option>
                     </select>
                 </div>
 

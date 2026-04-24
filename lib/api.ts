@@ -258,6 +258,14 @@ export interface CircleProgressUpdate {
   visibility: "circle" | "connections";
   created_at: string;
   user: CircleMemberUser;
+  book_title?: string | null;
+  circle_book?: {
+    id: number;
+    book: {
+      id: number;
+      title: string;
+    };
+  } | null;
 }
 
 export interface AcceptedConnectionUser {
@@ -276,7 +284,25 @@ export interface SelectableLibraryBook {
   book: Book;
 }
 
+export interface CurrentUser {
+  id: number;
+  email: string;
+  full_name: string;
+  avatar_url: string | null;
+  plan?: string;
+}
 
+export async function getCurrentUser(
+  token: string | null,
+): Promise<CurrentUser> {
+  const response = await apiFetch("/auth/me", {
+    headers: {
+      ...buildAuthHeaders(token),
+    },
+  });
+
+  return handleJsonResponse<CurrentUser>(response);
+}
 
 async function apiFetch(
   path: string,
@@ -303,13 +329,15 @@ async function apiFetch(
 }
 export class ApiError extends Error {
   status: number;
-  body?: unknown;
+  detail: string | null;
+  body: unknown;
 
-  constructor(message: string, status: number, body?: unknown) {
+  constructor(message: string, status: number, body: unknown, detail?: string | null) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.body = body;
+    this.detail = detail ?? null;
   }
 }
 
@@ -341,22 +369,33 @@ function buildAuthHeaders(token: string | null | undefined): HeadersInit {
   return headers;
 }
 
-async function handleJsonResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    const errorBody = await parseErrorBody(response);
+export async function handleJsonResponse<T>(response: Response): Promise<T> {
+  const errorBody = await response
+    .clone()
+    .json()
+    .catch(async () => {
+      const text = await response.clone().text().catch(() => "");
+      return text ? { detail: text } : null;
+    });
 
-    if (response.status === 404) {
-      throw new ApiError("NOT_FOUND", 404, errorBody);
-    }
+  if (!response.ok) {
+    const detail =
+      typeof errorBody === "object" &&
+        errorBody !== null &&
+        "detail" in errorBody &&
+        typeof (errorBody as { detail?: unknown }).detail === "string"
+        ? (errorBody as { detail: string }).detail
+        : null;
 
     throw new ApiError(
       `Request failed with status ${response.status}`,
       response.status,
       errorBody,
+      detail,
     );
   }
 
-  return (await response.json()) as T;
+  return response.json() as Promise<T>;
 }
 
 export async function login(payload: {
