@@ -2,31 +2,21 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { LayersPlus, Library, List, Star, Telescope } from "lucide-react";
-import {
-  usePathname,
-  useRouter,
-  useSearchParams,
-} from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import BookCard from "@/components/BookCard";
-import { filterBooks } from "@/lib/filter-books";
-import type { Book } from "@/lib/types";
-import {
-  DEFAULT_GENRE,
-  DEFAULT_SORT,
-  enrichBooks,
-  filterByGenre,
-  getAvailableGenres,
-  getCategoriesCount,
-  getTopRatedCount,
-  isValidSort,
-  sortBooks,
-  sortOptions,
-  type DiscoverBook,
-} from "@/lib/discover";
+import type { Book, DiscoverSort, DiscoverStats } from "@/lib/api";
 
 interface DiscoverPageClientProps {
-  initialBooks: Book[];
+  genres: string[];
+  exploreAll: Book[];
+  recommended: Book[];
+  trending: Book[];
+  newArrivals: Book[];
+  stats: DiscoverStats;
+  initialQuery: string;
+  initialGenre: string;
+  initialSort: DiscoverSort;
 }
 
 interface FilterChipProps {
@@ -38,27 +28,33 @@ interface FilterChipProps {
 interface DiscoverSectionProps {
   title: string;
   subtitle: string;
-  items: DiscoverBook[];
+  items: Book[];
 }
 
 interface ExploreAllGridProps {
-  books: DiscoverBook[];
+  books: Book[];
 }
 
+const DEFAULT_GENRE = "All";
+const DEFAULT_SORT: DiscoverSort = "recommended";
 const INITIAL_VISIBLE_BOOKS = 12;
 const LOAD_MORE_STEP = 12;
 
-function FilterChip({
-  children,
-  active = false,
-  onClick,
-}: FilterChipProps) {
+const sortOptions: { label: string; value: DiscoverSort }[] = [
+  { label: "Recommended", value: "recommended" },
+  { label: "Trending", value: "trending" },
+  { label: "Top Rated", value: "top-rated" },
+  { label: "Newest", value: "newest" },
+  { label: "Most Saved", value: "most-saved" },
+];
+
+function FilterChip({ children, active = false, onClick }: FilterChipProps) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={[
-        "shrink-0 rounded-full border px-4 py-2 text-sm whitespace-nowrap transition",
+        "shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-sm transition",
         active
           ? "border-white/20 bg-white text-black"
           : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white",
@@ -69,11 +65,7 @@ function FilterChip({
   );
 }
 
-function DiscoverSection({
-  title,
-  subtitle,
-  items,
-}: DiscoverSectionProps) {
+function DiscoverSection({ title, subtitle, items }: DiscoverSectionProps) {
   return (
     <section className="space-y-4">
       <div>
@@ -140,26 +132,24 @@ function ExploreAllGrid({ books }: ExploreAllGridProps) {
 }
 
 export default function DiscoverPageClient({
-  initialBooks,
+  genres,
+  exploreAll,
+  recommended,
+  trending,
+  newArrivals,
+  stats,
+  initialQuery,
+  initialGenre,
+  initialSort,
 }: DiscoverPageClientProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const query = searchParams.get("q") ?? "";
-  const rawGenre = searchParams.get("genre");
-  const rawSort = searchParams.get("sort");
+  const [searchValue, setSearchValue] = useState(initialQuery);
 
-  const enrichedBooks = useMemo(() => enrichBooks(initialBooks), [initialBooks]);
-  const availableGenres = useMemo(
-    () => getAvailableGenres(initialBooks),
-    [initialBooks],
-  );
-
-  const activeGenre =
-    rawGenre && availableGenres.includes(rawGenre) ? rawGenre : DEFAULT_GENRE;
-
-  const activeSort = isValidSort(rawSort) ? rawSort : DEFAULT_SORT;
+  const activeGenre = initialGenre || DEFAULT_GENRE;
+  const activeSort = initialSort || DEFAULT_SORT;
 
   const setParams = (updates: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -181,35 +171,11 @@ export default function DiscoverPageClient({
     router.replace(next ? `${pathname}?${next}` : pathname);
   };
 
-  const searchedBooks = useMemo(
-    () => filterBooks(enrichedBooks, query),
-    [enrichedBooks, query],
-  );
+  const handleSearchSubmit = () => {
+    setParams({ q: searchValue });
+  };
 
-  const filteredBooks = useMemo(() => {
-    const byGenre = filterByGenre(searchedBooks, activeGenre);
-    return sortBooks(byGenre, activeSort);
-  }, [searchedBooks, activeGenre, activeSort]);
-
-  const exploreAllKey = `${query}__${activeGenre}__${activeSort}`;
-
-  const recommended = useMemo(
-    () => sortBooks(filteredBooks, "Recommended").slice(0, 6),
-    [filteredBooks],
-  );
-
-  const trending = useMemo(
-    () => sortBooks(filteredBooks, "Top Rated").slice(0, 6),
-    [filteredBooks],
-  );
-
-  const newArrivals = useMemo(
-    () => sortBooks(filteredBooks, "Newest").slice(0, 6),
-    [filteredBooks],
-  );
-
-  const topRatedCount = getTopRatedCount(filteredBooks);
-  const categoriesCount = getCategoriesCount(filteredBooks);
+  const exploreAllKey = `${initialQuery}__${activeGenre}__${activeSort}`;
 
   return (
     <div className="space-y-8">
@@ -221,18 +187,41 @@ export default function DiscoverPageClient({
         <div className="mt-3 max-w-3xl">
           <h1 className="flex items-center gap-x-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
             Discover
-            <Telescope className="size-7 sm:size-8 shrink-0" />
+            <Telescope className="size-7 shrink-0 sm:size-8" />
           </h1>
 
           <p className="mt-4 text-sm leading-7 text-white/70 sm:text-base">
             Browse curated books by genre, popularity, and freshness.
           </p>
 
-          {(query || activeGenre !== DEFAULT_GENRE || activeSort !== DEFAULT_SORT) && (
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <input
+              value={searchValue}
+              onChange={(event) => setSearchValue(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") handleSearchSubmit();
+              }}
+              placeholder="Search books, authors, descriptions..."
+              className="min-h-12 flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none placeholder:text-white/35"
+            />
+
+            <button
+              type="button"
+              onClick={handleSearchSubmit}
+              className="rounded-2xl bg-white px-5 py-3 text-sm font-medium text-black"
+            >
+              Search
+            </button>
+          </div>
+
+          {(initialQuery || activeGenre !== DEFAULT_GENRE || activeSort !== DEFAULT_SORT) && (
             <div className="mt-4 flex flex-wrap gap-2 text-sm text-white/55">
-              {query ? (
+              {initialQuery ? (
                 <span>
-                  Search: <span className="font-medium text-white">&quot;{query}&quot;</span>
+                  Search:{" "}
+                  <span className="font-medium text-white">
+                    &quot;{initialQuery}&quot;
+                  </span>
                 </span>
               ) : null}
               {activeGenre !== DEFAULT_GENRE ? (
@@ -258,7 +247,7 @@ export default function DiscoverPageClient({
             </p>
             <div className="-mx-1 overflow-x-auto pb-1">
               <div className="flex min-w-max items-center gap-3 px-1">
-                {availableGenres.map((genre) => (
+                {genres.map((genre) => (
                   <FilterChip
                     key={genre}
                     active={activeGenre === genre}
@@ -279,11 +268,11 @@ export default function DiscoverPageClient({
               <div className="flex min-w-max items-center gap-2 px-1">
                 {sortOptions.map((option) => (
                   <FilterChip
-                    key={option}
-                    active={activeSort === option}
-                    onClick={() => setParams({ sort: option })}
+                    key={option.value}
+                    active={activeSort === option.value}
+                    onClick={() => setParams({ sort: option.value })}
                   >
-                    {option}
+                    {option.label}
                   </FilterChip>
                 ))}
               </div>
@@ -298,8 +287,8 @@ export default function DiscoverPageClient({
             Visible books
           </p>
           <p className="mt-2 flex items-center gap-x-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-            {filteredBooks.length}
-            <Library className="size-6 sm:size-7 shrink-0 text-white/70" />
+            {stats.visible_books}
+            <Library className="size-6 shrink-0 text-white/70 sm:size-7" />
           </p>
         </div>
 
@@ -308,8 +297,8 @@ export default function DiscoverPageClient({
             Top rated
           </p>
           <p className="mt-2 flex items-center gap-x-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-            {topRatedCount}
-            <Star className="size-6 sm:size-7 shrink-0 fill-yellow-400 text-yellow-400" />
+            {stats.top_rated}
+            <Star className="size-6 shrink-0 fill-yellow-400 text-yellow-400 sm:size-7" />
           </p>
         </div>
 
@@ -318,9 +307,8 @@ export default function DiscoverPageClient({
             New on Stack
           </p>
           <p className="mt-2 flex items-center gap-x-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-            {newArrivals.length}
-            {/* 'size-6' for mobile (24px) and 'sm:size-7' for desktop (28px) */}
-            <LayersPlus className="size-6 sm:size-7 shrink-0 text-white/70" />
+            {stats.new_this_week}
+            <LayersPlus className="size-6 shrink-0 text-white/70 sm:size-7" />
           </p>
         </div>
 
@@ -329,8 +317,8 @@ export default function DiscoverPageClient({
             Categories
           </p>
           <p className="mt-2 flex items-center gap-x-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-            {categoriesCount}
-            <List className="size-6 sm:size-7 shrink-0 text-white/70" />
+            {stats.categories}
+            <List className="size-6 shrink-0 text-white/70 sm:size-7" />
           </p>
         </div>
       </section>
@@ -346,10 +334,13 @@ export default function DiscoverPageClient({
             </p>
           </div>
 
-          {(query || activeGenre !== DEFAULT_GENRE || activeSort !== DEFAULT_SORT) && (
+          {(initialQuery || activeGenre !== DEFAULT_GENRE || activeSort !== DEFAULT_SORT) && (
             <button
               type="button"
-              onClick={() => setParams({ q: null, genre: null, sort: null })}
+              onClick={() => {
+                setSearchValue("");
+                setParams({ q: null, genre: null, sort: null });
+              }}
               className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/75 transition hover:bg-white/10 hover:text-white"
             >
               Reset filters
@@ -357,7 +348,7 @@ export default function DiscoverPageClient({
           )}
         </div>
 
-        <ExploreAllGrid key={exploreAllKey} books={filteredBooks} />
+        <ExploreAllGrid key={exploreAllKey} books={exploreAll} />
       </section>
 
       <div className="space-y-10">
@@ -368,7 +359,7 @@ export default function DiscoverPageClient({
         />
         <DiscoverSection
           title="Trending Now"
-          subtitle="Top-rated books from what currently matches."
+          subtitle="Recently active books based on reading and library activity."
           items={trending}
         />
         <DiscoverSection

@@ -292,6 +292,29 @@ export interface CurrentUser {
   plan?: string;
 }
 
+export type DiscoverSort =
+  | "recommended"
+  | "top-rated"
+  | "newest"
+  | "most-saved"
+  | "trending";
+
+export interface DiscoverBooksParams {
+  q?: string;
+  genre?: string;
+  sort?: DiscoverSort;
+  limit?: number;
+  offset?: number;
+}
+
+export interface DiscoverStats {
+  visible_books: number;
+  top_rated: number;
+  new_this_week: number;
+  categories: number;
+}
+
+
 export async function getCurrentUser(
   token: string | null,
 ): Promise<CurrentUser> {
@@ -821,4 +844,53 @@ export async function getFeaturedBook(): Promise<Book> {
   });
 
   return handleJsonResponse<Book>(response);
+}
+
+
+export async function getBookGenres(): Promise<string[]> {
+  const response = await apiFetch("/books/genres", {
+    cache: "no-store",
+  });
+
+  return handleJsonResponse<string[]>(response);
+}
+
+export async function getDiscoverBooks(
+  params: DiscoverBooksParams = {},
+): Promise<Book[]> {
+  const searchParams = new URLSearchParams();
+
+  if (params.q) searchParams.set("q", params.q);
+  if (params.genre) searchParams.set("genre", params.genre);
+  if (params.sort) searchParams.set("sort", params.sort);
+  if (params.limit) searchParams.set("limit", String(params.limit));
+  if (params.offset) searchParams.set("offset", String(params.offset));
+
+  const query = searchParams.toString();
+
+  const response = await apiFetch(
+    query ? `/books/discover?${query}` : "/books/discover",
+    { cache: "no-store" },
+  );
+
+  return handleJsonResponse<Book[]>(response);
+}
+
+export async function getDiscoverStats(params: {
+  q?: string;
+  genre?: string;
+}): Promise<DiscoverStats> {
+  const searchParams = new URLSearchParams();
+
+  if (params.q) searchParams.set("q", params.q);
+  if (params.genre) searchParams.set("genre", params.genre);
+
+  const query = searchParams.toString();
+
+  const response = await apiFetch(
+    query ? `/books/discover/stats?${query}` : "/books/discover/stats",
+    { cache: "no-store" },
+  );
+
+  return handleJsonResponse<DiscoverStats>(response);
 }

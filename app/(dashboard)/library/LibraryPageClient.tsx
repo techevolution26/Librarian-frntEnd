@@ -252,7 +252,11 @@ export default function LibraryPageClient({
                 />
                 <StatCard
                     label="Average rating"
-                    value={String(summaryForHints.average_rating)}
+                    value={
+                        summaryForHints.average_rating
+                            ? summaryForHints.average_rating.toFixed(1)
+                            : "0.0"
+                    }
                     hint="Average rating across your library."
                 />
             </section>
