@@ -806,3 +806,19 @@ export async function createCircleProgressUpdate(
 
   return handleJsonResponse<CircleProgressUpdate>(response);
 }
+
+export async function getTrendingBooks(limit = 12): Promise<Book[]> {
+  const response = await apiFetch(`/books/trending?limit=${limit}`, {
+    cache: "no-store",
+  });
+
+  return handleJsonResponse<Book[]>(response);
+}
+
+export async function getFeaturedBook(): Promise<Book> {
+  const response = await apiFetch("/books/featured", {
+    cache: "no-store",
+  });
+
+  return handleJsonResponse<Book>(response);
+}
