@@ -1,11 +1,12 @@
 import Link from "next/link";
 import BookCard from "./BookCard";
 import { Book } from "@/lib/types";
+import { ReactNode } from "react";
 
 type RowVariant = "compact" | "standard" | "large" | "editorial";
 
 interface RowProps {
-  title: string;
+  title: ReactNode;
   books: Book[];
   limit?: number;
   viewAllHref?: string;

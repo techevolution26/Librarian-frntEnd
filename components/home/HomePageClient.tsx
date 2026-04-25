@@ -6,6 +6,8 @@ import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Row from "@/components/Row";
 import type { Book } from "@/lib/types";
+import CirclePowerButton from "@/components/home/CirclePowerButton";
+import { Crown, Sparkles } from "lucide-react";
 
 interface HomePageClientProps {
   books: Book[];
@@ -100,7 +102,12 @@ export default function HomePageClient({
 
         <div className="mt-10 space-y-10">
           <Row
-            title="Trending Now"
+            title={
+              <span className="flex items-center gap-x-2">
+                Trending Now
+                <Crown className="size-5 text-yellow-400 shrink-0" />
+              </span>
+            }
             books={trendingBooks}
             limit={8}
             viewAllHref="/discover?sort=Top%20Rated"
@@ -108,7 +115,12 @@ export default function HomePageClient({
           />
 
           <Row
-            title="New Releases"
+            title={
+              <span className="flex items-center gap-x-2">
+                New Releases
+                <Sparkles className="size-5 text-yellow-400 shrink-0" />
+              </span>
+            }
             books={newReleases}
             limit={6}
             viewAllHref="/discover?sort=Newest"
@@ -124,6 +136,7 @@ export default function HomePageClient({
           />
         </div>
       </section>
+      <CirclePowerButton />
     </main>
   );
 }

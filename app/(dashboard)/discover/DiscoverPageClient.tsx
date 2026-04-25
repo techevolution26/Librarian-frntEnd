@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
+import { LayersPlus, Library, List, Star, Telescope } from "lucide-react";
 import {
   usePathname,
   useRouter,
@@ -218,8 +219,9 @@ export default function DiscoverPageClient({
         </p>
 
         <div className="mt-3 max-w-3xl">
-          <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+          <h1 className="flex items-center gap-x-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
             Discover
+            <Telescope className="size-7 sm:size-8 shrink-0" />
           </h1>
 
           <p className="mt-4 text-sm leading-7 text-white/70 sm:text-base">
@@ -295,8 +297,9 @@ export default function DiscoverPageClient({
           <p className="text-xs uppercase tracking-[0.16em] text-white/45 sm:text-sm sm:tracking-normal sm:text-white/60">
             Visible books
           </p>
-          <p className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+          <p className="mt-2 flex items-center gap-x-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
             {filteredBooks.length}
+            <Library className="size-6 sm:size-7 shrink-0 text-white/70" />
           </p>
         </div>
 
@@ -304,17 +307,20 @@ export default function DiscoverPageClient({
           <p className="text-xs uppercase tracking-[0.16em] text-white/45 sm:text-sm sm:tracking-normal sm:text-white/60">
             Top rated
           </p>
-          <p className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+          <p className="mt-2 flex items-center gap-x-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
             {topRatedCount}
+            <Star className="size-6 sm:size-7 shrink-0 fill-yellow-400 text-yellow-400" />
           </p>
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 sm:rounded-3xl sm:p-5">
           <p className="text-xs uppercase tracking-[0.16em] text-white/45 sm:text-sm sm:tracking-normal sm:text-white/60">
-            New in results
+            New on Stack
           </p>
-          <p className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+          <p className="mt-2 flex items-center gap-x-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
             {newArrivals.length}
+            {/* 'size-6' for mobile (24px) and 'sm:size-7' for desktop (28px) */}
+            <LayersPlus className="size-6 sm:size-7 shrink-0 text-white/70" />
           </p>
         </div>
 
@@ -322,8 +328,9 @@ export default function DiscoverPageClient({
           <p className="text-xs uppercase tracking-[0.16em] text-white/45 sm:text-sm sm:tracking-normal sm:text-white/60">
             Categories
           </p>
-          <p className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+          <p className="mt-2 flex items-center gap-x-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
             {categoriesCount}
+            <List className="size-6 sm:size-7 shrink-0 text-white/70" />
           </p>
         </div>
       </section>

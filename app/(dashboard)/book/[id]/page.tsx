@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { StarHalf, FileText, BookOpenText } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getBookById } from "@/lib/api";
 import BookActions from "@/components/book/BookActions";
@@ -62,21 +63,29 @@ export default async function BookPage({ params }: BookPageProps) {
                   <p className="text-xs uppercase tracking-[0.2em] text-white/40">
                     Rating
                   </p>
-                  <p className="mt-2 text-2xl font-semibold">{book.rating}</p>
-                </div>
+                  <p className="mt-2 flex items-center gap-x-2 text-2xl font-semibold text-white">
+                    {book.rating}
+                    <StarHalf className="size-6 text-yellow-400 shrink-0" />
+                  </p>                </div>
 
                 <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
                   <p className="text-xs uppercase tracking-[0.2em] text-white/40">
                     Pages
                   </p>
-                  <p className="mt-2 text-2xl font-semibold">{book.pages}</p>
+                  <p className="mt-2 flex items-center gap-x-2 text-2xl font-semibold text-white">
+                    {book.pages}
+                    <BookOpenText className="size-6 shrink-0 text-white/70" />
+                  </p>
                 </div>
 
                 <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
                   <p className="text-xs uppercase tracking-[0.2em] text-white/40">
                     Source
                   </p>
-                  <p className="mt-2 text-2xl font-semibold">{book.source_type}</p>
+                  <p className="mt-2 flex items-center gap-x-2 text-2xl font-semibold text-white">
+                    {book.source_type}
+                    <FileText className="size-6 shrink-0 text-white/70" />
+                  </p>
                 </div>
               </div>
 

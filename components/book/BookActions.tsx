@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { addToLibrary, startReading } from "@/lib/api";
 import { encode } from "punycode";
+import { BookOpen, Loader2, SaveAll, SquareLibrary } from "lucide-react";
 
 interface BookActionsProps {
   bookId: number;
@@ -101,27 +102,48 @@ export default function BookActions({ bookId }: BookActionsProps) {
         type="button"
         onClick={handleStartReading}
         disabled={isStarting}
-        className="rounded-xl bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-70"
+        className="inline-flex items-center justify-center gap-x-2 rounded-xl bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-70"
       >
-        {isStarting ? "Opening..." : "Start Reading"}
+        {isStarting ? (
+          <>
+            <Loader2 className="size-4 animate-spin" />
+            Opening...
+          </>
+        ) : (
+          <>
+            Start Reading
+            <BookOpen className="size-4 shrink-0" />
+          </>
+        )}
       </button>
 
       <button
         type="button"
         onClick={handleAddToLibrary}
         disabled={isSaving}
-        className="rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-medium text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-70"
+        className="inline-flex items-center justify-center gap-x-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-medium text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-70"
       >
-        {isSaving ? "Saving..." : "Add to Library"}
+        {isSaving ? (
+          <>
+            <Loader2 className="size-4 animate-spin" />
+            Saving...
+          </>
+        ) : (
+          <>
+            Add to Library
+            <SquareLibrary className="size-4 shrink-0" />
+          </>
+        )}
       </button>
 
       <button
         type="button"
         onClick={handleSaveForLater}
         disabled={isSaving}
-        className="rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-medium text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-70"
+        className="inline-flex items-center justify-center gap-x-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-medium text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-70"
       >
-        Save for Later
+        {isSaving ? "Saving..." : "Save for Later"}
+        {!isSaving && <SaveAll className="size-4 shrink-0 text-white/80" />}
       </button>
 
       {message ? (

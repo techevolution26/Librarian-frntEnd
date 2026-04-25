@@ -9,8 +9,8 @@ import {
     Home,
     Settings2,
     UserRound,
-    Users,
-    UsersRound,
+    MessageCirclePlus,
+    Infinity,
 } from "lucide-react";
 import type { SidebarSummary } from "@/lib/api";
 
@@ -18,8 +18,8 @@ const navItems = [
     { href: "/", label: "Home", icon: Home },
     { href: "/library", label: "Library", icon: BookOpen },
     { href: "/discover", label: "Discover", icon: Compass },
-    { href: "/connections", label: "Connections", icon: Users },
-    { href: "/circles", label: "Circles", icon: UsersRound },
+    { href: "/connections", label: "Connect", icon: MessageCirclePlus },
+    { href: "/circles", label: "Circles", icon: Infinity },
     { href: "/profile", label: "Profile", icon: UserRound },
     { href: "/settings", label: "Settings", icon: Settings2 },
 ];
@@ -52,8 +52,8 @@ export default function SidebarClient({ sidebarSummary }: SidebarClientProps) {
 
     return (
         <>
-            <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-neutral-950/95 px-2 py-2 backdrop-blur-xl md:hidden">
-                <div className="grid grid-cols-6 gap-1">
+            <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-neutral-950/95 px-2 py-1 backdrop-blur-xl md:hidden">
+                <div className="flex items-center gap-1 overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     {navItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = isItemActive(pathname, item.href);
@@ -63,14 +63,14 @@ export default function SidebarClient({ sidebarSummary }: SidebarClientProps) {
                                 key={item.href}
                                 href={item.href}
                                 className={[
-                                    "flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] transition",
+                                    "flex min-w-[56px] shrink-0 flex-col items-center justify-center gap-[2px] rounded-lg px-1 py-1 text-[9px] leading-none transition",
                                     isActive
                                         ? "bg-white/10 text-white"
                                         : "text-white/60 hover:bg-white/5 hover:text-white",
                                 ].join(" ")}
                             >
-                                <Icon className="h-4 w-4 shrink-0" />
-                                <span className="truncate">{item.label}</span>
+                                <Icon className="h-[18px] w-[18px] shrink-0" />
+                                <span className="max-w-[52px] truncate">{item.label}</span>
                             </Link>
                         );
                     })}
@@ -143,7 +143,7 @@ export default function SidebarClient({ sidebarSummary }: SidebarClientProps) {
                         </div>
                         <div>
                             <h1 className="text-lg font-semibold tracking-tight text-white">
-                                Book Box App
+                                Librarian
                             </h1>
                             <p className="text-xs text-white/45">
                                 {sidebarSummary?.full_name ?? "Transforming Your Mind"}

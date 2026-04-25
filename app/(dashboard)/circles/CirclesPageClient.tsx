@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ApiError, createCircle, type Circle } from "@/lib/api";
+import { Users } from "lucide-react";
 
 interface Props {
     initialCircles: Circle[];
@@ -46,7 +47,10 @@ export default function CirclesPageClient({ initialCircles }: Props) {
     return (
         <div className="space-y-8">
             <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
-                <h1 className="text-2xl font-semibold text-white">Circles</h1>
+                <h1 className="flex items-center gap-x-2 text-2xl font-semibold text-white">
+                    Circles
+                    <Users className="size-6 shrink-0 text-emerald-400" />
+                </h1>
                 <p className="mt-2 text-sm text-white/60">
                     Create private reading groups for family, friends, or school.
                 </p>

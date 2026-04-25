@@ -24,9 +24,10 @@ export default function Hero({ book }: HeroProps) {
 
       <div className="relative z-10 flex min-h-[56vh] items-end p-6 sm:p-10 lg:p-14">
         <div className="max-w-2xl">
-          <p className="mb-3 inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-white/80">
+          <p className="mb-3 inline-flex rounded-full border border-blue-400/20 bg-gradient-to-r from-navy-900 via-blue-900 to-blue-800 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-blue-100 shadow-lg shadow-blue-900/20">
             Featured book
           </p>
+
 
           <h2 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
             {book.title}

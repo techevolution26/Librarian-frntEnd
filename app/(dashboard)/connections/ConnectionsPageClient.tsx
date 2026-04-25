@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Link } from "lucide-react";
 import {
     ApiError,
     actOnConnection,
@@ -115,9 +116,12 @@ export default function ConnectionsPageClient({
         <div className="space-y-8">
             <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 shadow-lg sm:p-6">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                    {/* add link icon inside */}
                     <div className="max-w-2xl">
-                        <h1 className="text-2xl font-semibold tracking-tight text-white">
-                            Connections
+                        <h1 className="flex items-center gap-x-2 text-2xl font-semibold tracking-tight text-white">
+                            Connect
+                            {/* 'shrink-0' prevents the icon from squishing on tiny mobile screens */}
+                            <Link className="size-5 shrink-0 text-blue-500" />
                         </h1>
                         <p className="mt-2 text-sm leading-6 text-white/60">
                             Invite friends, family, classmates, or mentors and build your

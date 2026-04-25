@@ -2,7 +2,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { LibraryBig } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import BookCard from "@/components/BookCard";
 import { filterBooks } from "@/lib/filter-books";
 import type { LibraryItem, LibrarySummary } from "@/lib/api";
@@ -143,6 +144,7 @@ export default function LibraryPageClient({
     initialItems,
     initialSummary,
 }: LibraryPageClientProps) {
+    const router = useRouter();
     const searchParams = useSearchParams();
     const query = searchParams.get("q") ?? "";
 
@@ -214,8 +216,9 @@ export default function LibraryPageClient({
                     <p className="text-xs uppercase tracking-[0.24em] text-white/45">
                         Personal library
                     </p>
-                    <h1 className="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-4xl">
+                    <h1 className="mt-3 flex items-center gap-x-3 text-2xl font-semibold tracking-tight text-white sm:text-4xl">
                         Your Library
+                        <LibraryBig className="size-6 sm:size-9 shrink-0 text-white/80" />
                     </h1>
                     <p className="mt-4 max-w-2xl text-sm leading-7 text-white/70 sm:text-base">
                         Browse all your books from one source of truth and track reading state,
@@ -375,14 +378,14 @@ export default function LibraryPageClient({
                     <div className="mt-3 flex gap-2">
                         <button
                             className="rounded-lg border border-white/10 px-3 py-1 text-xs"
-                            onClick={() => router.push(`/circles/new?book=${item.book.id}`)}
+                            onClick={() => router.push(`/circles/`)}
                         >
                             Start group
                         </button>
 
                         <button
                             className="rounded-lg border border-white/10 px-3 py-1 text-xs"
-                            onClick={() => router.push(`/connections?invite=${item.book.id}`)}
+                            onClick={() => router.push(`/connections/`)}
                         >
                             Invite friends
                         </button>

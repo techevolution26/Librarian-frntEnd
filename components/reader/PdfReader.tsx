@@ -356,7 +356,7 @@ export default function PdfReader({
               <div className="flex items-center gap-2">
                 {safeFileUrl ? (
                   <>
-                    <a
+                    {/* <a
                       href={safeFileUrl}
                       target="_blank"
                       rel="noreferrer"
@@ -371,7 +371,7 @@ export default function PdfReader({
                       className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10"
                     >
                       Download
-                    </a>
+                    </a> */}
                   </>
                 ) : (
                   <span className="text-xs text-white/45">File unavailable</span>
