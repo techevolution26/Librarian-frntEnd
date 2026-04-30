@@ -1,7 +1,14 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { updateUserSettings } from "@/lib/api";
+import {
+    logoutUser,
+    updateOnboardingPreferences,
+    updateUserSettings,
+    type OnboardingPreferences,
+} from "@/lib/api";
+
 import {
     type UserSettings,
     type ThemeOption,
@@ -13,6 +20,7 @@ import {
 
 interface SettingsPageClientProps {
     initialSettings: UserSettings;
+    initialOnboarding: OnboardingPreferences;
 }
 
 interface SectionCardProps {
@@ -85,7 +93,7 @@ function InputRow({
             <input
                 type={type}
                 value={value}
-                onChange={(e) => onChange(e.target.value)}
+                onChange={(event) => onChange(event.target.value)}
                 className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-white/20 focus:bg-white/10"
             />
         </div>
@@ -108,11 +116,11 @@ function SelectRow<T extends string>({
 
             <select
                 value={value}
-                onChange={(e) => onChange(e.target.value as T)}
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-white/20 focus:bg-white/10"
+                onChange={(event) => onChange(event.target.value as T)}
+                className="w-full rounded-xl border border-white/10 bg-neutral-900 px-4 py-3 text-sm text-white outline-none transition focus:border-white/20"
             >
                 {options.map((option) => (
-                    <option key={option} value={option} className="bg-neutral-900">
+                    <option key={option} value={option} className="bg-neutral-900 text-white">
                         {option}
                     </option>
                 ))}
@@ -140,9 +148,7 @@ function ToggleRow({
                 aria-pressed={checked}
                 className={[
                     "relative mt-1 h-7 w-12 rounded-full border transition",
-                    checked
-                        ? "border-white/20 bg-white"
-                        : "border-white/10 bg-white/10",
+                    checked ? "border-white/20 bg-white" : "border-white/10 bg-white/10",
                 ].join(" ")}
             >
                 <span
@@ -156,11 +162,71 @@ function ToggleRow({
     );
 }
 
+function PreferenceChips({
+    label,
+    options,
+    selected,
+    onChange,
+}: {
+    label: string;
+    options: string[];
+    selected: string[];
+    onChange: (items: string[]) => void;
+}) {
+    return (
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+            <p className="text-sm font-medium text-white">{label}</p>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+                {options.map((option) => {
+                    const active = selected.includes(option);
+
+                    return (
+                        <button
+                            key={option}
+                            type="button"
+                            onClick={() =>
+                                onChange(
+                                    active
+                                        ? selected.filter((item) => item !== option)
+                                        : [...selected, option],
+                                )
+                            }
+                            className={[
+                                "rounded-full border px-4 py-2 text-sm transition",
+                                active
+                                    ? "border-white bg-white text-black"
+                                    : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10",
+                            ].join(" ")}
+                        >
+                            {option}
+                        </button>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
 export default function SettingsPageClient({
     initialSettings,
+    initialOnboarding,
 }: SettingsPageClientProps) {
+    const router = useRouter();
+
     const [settings, setSettings] = useState<UserSettings>(initialSettings);
+
+    const [personalization, setPersonalization] = useState({
+        preferredGenres: initialOnboarding.preferred_genres,
+        readingGoals: initialOnboarding.reading_goals,
+        contentStyles: initialOnboarding.content_styles,
+        preferredLengths: initialOnboarding.preferred_lengths,
+        weeklyTarget: initialOnboarding.weekly_target ?? "",
+    });
+
     const [isSaving, setIsSaving] = useState(false);
+    const [isSavingPersonalization, setIsSavingPersonalization] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
 
     const updateAccount = <K extends keyof UserSettings["account"]>(
@@ -213,6 +279,21 @@ export default function SettingsPageClient({
         }));
     };
 
+    const handleLogout = async () => {
+        setIsLoggingOut(true);
+        setMessage(null);
+
+        try {
+            await logoutUser();
+            router.replace("/login");
+            router.refresh();
+        } catch {
+            setMessage("Failed to sign out.");
+        } finally {
+            setIsLoggingOut(false);
+        }
+    };
+
     const handleSave = async () => {
         setIsSaving(true);
         setMessage(null);
@@ -234,10 +315,42 @@ export default function SettingsPageClient({
             });
 
             setMessage("Settings saved.");
+            router.refresh();
         } catch {
             setMessage("Failed to save settings.");
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleSavePersonalization = async () => {
+        setIsSavingPersonalization(true);
+        setMessage(null);
+
+        try {
+            const updated = await updateOnboardingPreferences({
+                preferred_genres: personalization.preferredGenres,
+                reading_goals: personalization.readingGoals,
+                content_styles: personalization.contentStyles,
+                preferred_lengths: personalization.preferredLengths,
+                weekly_target: personalization.weeklyTarget || null,
+                onboarding_completed: true,
+            });
+
+            setPersonalization({
+                preferredGenres: updated.preferred_genres,
+                readingGoals: updated.reading_goals,
+                contentStyles: updated.content_styles,
+                preferredLengths: updated.preferred_lengths,
+                weeklyTarget: updated.weekly_target ?? "",
+            });
+
+            setMessage("Personalization saved.");
+            router.refresh();
+        } catch {
+            setMessage("Failed to save personalization.");
+        } finally {
+            setIsSavingPersonalization(false);
         }
     };
 
@@ -255,9 +368,7 @@ export default function SettingsPageClient({
                     notifications, and adjust privacy settings from one place.
                 </p>
 
-                {message ? (
-                    <p className="mt-4 text-sm text-white/60">{message}</p>
-                ) : null}
+                {message ? <p className="mt-4 text-sm text-white/60">{message}</p> : null}
             </section>
 
             <SectionCard
@@ -410,6 +521,110 @@ export default function SettingsPageClient({
                 />
             </SectionCard>
 
+            <SectionCard
+                eyebrow="Personalization"
+                title="Content preferences"
+                description="Control how featured books, recommendations, and discover shelves are ranked."
+            >
+                <PreferenceChips
+                    label="Preferred genres"
+                    options={[
+                        "Productivity",
+                        "Business",
+                        "Mindset",
+                        "Fiction",
+                        "Design",
+                        "Tech",
+                        "Finance",
+                        "Faith",
+                    ]}
+                    selected={personalization.preferredGenres}
+                    onChange={(items) =>
+                        setPersonalization((prev) => ({
+                            ...prev,
+                            preferredGenres: items,
+                        }))
+                    }
+                />
+
+                <PreferenceChips
+                    label="Reading goals"
+                    options={["Learn skills", "Career growth", "Build habits", "Study", "Relax"]}
+                    selected={personalization.readingGoals}
+                    onChange={(items) =>
+                        setPersonalization((prev) => ({
+                            ...prev,
+                            readingGoals: items,
+                        }))
+                    }
+                />
+
+                <PreferenceChips
+                    label="Content style"
+                    options={["Practical", "Story-driven", "Academic", "Inspirational"]}
+                    selected={personalization.contentStyles}
+                    onChange={(items) =>
+                        setPersonalization((prev) => ({
+                            ...prev,
+                            contentStyles: items,
+                        }))
+                    }
+                />
+
+                <PreferenceChips
+                    label="Preferred length"
+                    options={["Short reads", "Medium books", "Deep books"]}
+                    selected={personalization.preferredLengths}
+                    onChange={(items) =>
+                        setPersonalization((prev) => ({
+                            ...prev,
+                            preferredLengths: items,
+                        }))
+                    }
+                />
+
+                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <p className="text-sm font-medium text-white">Weekly target</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                        {["15 mins/day", "30 mins/day", "1 book/week", "Weekends only"].map(
+                            (target) => {
+                                const active = personalization.weeklyTarget === target;
+
+                                return (
+                                    <button
+                                        key={target}
+                                        type="button"
+                                        onClick={() =>
+                                            setPersonalization((prev) => ({
+                                                ...prev,
+                                                weeklyTarget: target,
+                                            }))
+                                        }
+                                        className={[
+                                            "rounded-full border px-4 py-2 text-sm transition",
+                                            active
+                                                ? "border-white bg-white text-black"
+                                                : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10",
+                                        ].join(" ")}
+                                    >
+                                        {target}
+                                    </button>
+                                );
+                            },
+                        )}
+                    </div>
+                </div>
+
+                <button
+                    type="button"
+                    onClick={handleSavePersonalization}
+                    disabled={isSavingPersonalization}
+                    className="rounded-xl bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-white/90 disabled:opacity-70"
+                >
+                    {isSavingPersonalization ? "Saving..." : "Save personalization"}
+                </button>
+            </SectionCard>
+
             <section className="rounded-[2rem] border border-red-500/20 bg-red-500/5 p-6 shadow-xl">
                 <p className="text-xs uppercase tracking-[0.24em] text-red-200/60">
                     Danger zone
@@ -418,17 +633,26 @@ export default function SettingsPageClient({
                     High-impact actions
                 </h2>
                 <p className="mt-2 text-sm leading-7 text-white/65">
-                    These actions affect your account directly and should be used with
-                    care.
+                    These actions affect your account directly and should be used with care.
                 </p>
 
                 <div className="mt-6 flex flex-wrap gap-3">
-                    <button className="rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm text-white/85 transition hover:bg-white/10">
-                        Sign out
+                    <button
+                        type="button"
+                        onClick={handleLogout}
+                        disabled={isLoggingOut}
+                        className="rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm text-white/85 transition hover:bg-white/10 disabled:opacity-70"
+                    >
+                        {isLoggingOut ? "Signing out..." : "Sign out"}
                     </button>
-                    <button className="rounded-xl border border-red-400/20 bg-red-500/10 px-5 py-3 text-sm text-red-100 transition hover:bg-red-500/20">
+
+                    <button
+                        type="button"
+                        className="rounded-xl border border-red-400/20 bg-red-500/10 px-5 py-3 text-sm text-red-100 transition hover:bg-red-500/20"
+                    >
                         Delete account
                     </button>
+
                     <button
                         type="button"
                         onClick={handleSave}

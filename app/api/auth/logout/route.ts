@@ -1,15 +1,11 @@
-import { NextResponse } from 'next/server';
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
 export async function POST() {
-    const response = NextResponse.json({ ok: true });
+  const cookieStore = await cookies();
 
-    response.cookies.set("access_token", "", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        expires: new Date(0),
-    });
+  cookieStore.delete("access_token");
+  cookieStore.delete("refresh_token");
 
-    return response;
+  return NextResponse.json({ ok: true });
 }

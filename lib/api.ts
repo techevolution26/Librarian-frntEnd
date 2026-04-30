@@ -314,6 +314,14 @@ export interface DiscoverStats {
   categories: number;
 }
 
+export interface OnboardingPreferences {
+  preferred_genres: string[];
+  reading_goals: string[];
+  content_styles: string[];
+  preferred_lengths: string[];
+  weekly_target: string | null;
+  onboarding_completed: boolean;
+}
 
 export async function getCurrentUser(
   token: string | null,
@@ -893,4 +901,39 @@ export async function getDiscoverStats(params: {
   );
 
   return handleJsonResponse<DiscoverStats>(response);
+}
+
+export async function getOnboardingPreferences(
+  token?: string,
+): Promise<OnboardingPreferences> {
+  const response = await apiFetch("/settings/onboarding", {
+    headers: buildAuthHeaders(token),
+    cache: "no-store",
+  });
+
+  return handleJsonResponse<OnboardingPreferences>(response);
+}
+
+export async function updateOnboardingPreferences(
+  payload: OnboardingPreferences,
+): Promise<OnboardingPreferences> {
+  const response = await apiFetch("/api/settings/onboarding", {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return handleJsonResponse<OnboardingPreferences>(response);
+}
+
+export async function logoutUser(): Promise<void> {
+  const response = await apiFetch("/api/auth/logout", {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    throw new ApiError("Failed to logout", response.status, null);
+  }
 }

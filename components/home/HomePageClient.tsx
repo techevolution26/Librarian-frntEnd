@@ -11,17 +11,102 @@ import CirclePowerButton from "@/components/home/CirclePowerButton";
 
 import type { Book } from "@/lib/types";
 
+interface HomePersonalization {
+  preferred_genres: string[];
+  reading_goals: string[];
+  content_styles: string[];
+  preferred_lengths: string[];
+  weekly_target: string | null;
+  onboarding_completed: boolean;
+}
 interface HomePageClientProps {
   books: Book[];
   featuredBook: Book | null;
   trendingBooks: Book[];
+  personalization: HomePersonalization;
   isServiceUnavailable?: boolean;
+}
+
+function getBookPersonalizationScore(
+  book: Book,
+  personalization: HomePersonalization,
+): number {
+  let score = 0;
+
+  const bookGenres = book.genre ?? [];
+  const preferredGenres = personalization.preferred_genres;
+
+  for (const genre of bookGenres) {
+    if (
+      preferredGenres.some(
+        (preferred) => preferred.toLowerCase() === genre.toLowerCase(),
+      )
+    ) {
+      score += 12;
+    }
+  }
+
+  const haystack = [
+    book.title,
+    book.author,
+    book.description,
+    bookGenres.join(" "),
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  for (const goal of personalization.reading_goals) {
+    if (haystack.includes(goal.toLowerCase())) {
+      score += 4;
+    }
+  }
+
+  for (const style of personalization.content_styles) {
+    if (haystack.includes(style.toLowerCase())) {
+      score += 3;
+    }
+  }
+
+  if (personalization.preferred_lengths.includes("Short reads") && book.pages <= 180) {
+    score += 4;
+  }
+
+  if (
+    personalization.preferred_lengths.includes("Medium books") &&
+    book.pages > 180 &&
+    book.pages <= 350
+  ) {
+    score += 4;
+  }
+
+  if (personalization.preferred_lengths.includes("Deep books") && book.pages > 350) {
+    score += 4;
+  }
+
+  score += book.rating ?? 0;
+
+  return score;
+}
+
+function rankPersonalizedBooks(
+  books: Book[],
+  personalization: HomePersonalization,
+): Book[] {
+  return [...books].sort((a, b) => {
+    const scoreA = getBookPersonalizationScore(a, personalization);
+    const scoreB = getBookPersonalizationScore(b, personalization);
+
+    if (scoreB !== scoreA) return scoreB - scoreA;
+
+    return Number(b.id) - Number(a.id);
+  });
 }
 
 export default function HomePageClient({
   books,
   featuredBook,
   trendingBooks,
+  personalization,
   isServiceUnavailable = false,
 }: HomePageClientProps) {
   const [searchValue, setSearchValue] = useState("");
@@ -73,24 +158,39 @@ export default function HomePageClient({
     return trendingBooks.filter((book) => filteredBookIds.has(String(book.id)));
   }, [filteredBooks, searchValue, trendingBooks]);
 
+  const personalizedBooks = useMemo(
+    () => rankPersonalizedBooks(filteredBooks, personalization),
+    [filteredBooks, personalization],
+  );
+
+  const personalizedTrendingBooks = useMemo(
+    () => rankPersonalizedBooks(filteredTrendingBooks, personalization),
+    [filteredTrendingBooks, personalization],
+  );
+
   const heroBook =
-    featuredBook ??
-    filteredTrendingBooks[0] ??
-    filteredBooks[0] ??
-    trendingBooks[0] ??
-    books[0];
+    featuredBook && getBookPersonalizationScore(featuredBook, personalization) > 0
+      ? featuredBook
+      : personalizedTrendingBooks[0] ??
+      personalizedBooks[0] ??
+      featuredBook ??
+      filteredTrendingBooks[0] ??
+      filteredBooks[0] ??
+      trendingBooks[0] ??
+      books[0];
 
   const trendingShelfBooks =
-    filteredTrendingBooks.length > 0
-      ? filteredTrendingBooks
-      : filteredBooks;
+    personalizedTrendingBooks.length > 0
+      ? personalizedTrendingBooks
+      : personalizedBooks;
+
+  const recommendedBooks = personalizedBooks;
 
   const newReleases = [...filteredBooks].sort(
     (a, b) => Number(b.id) - Number(a.id),
   );
 
   const continueReading = filteredBooks.slice(0, 4);
-
   if (isServiceUnavailable) {
     return (
       <main id="main-content" className="min-h-screen">
@@ -156,7 +256,52 @@ export default function HomePageClient({
       <section className="mx-auto w-full max-w-[1600px] px-4 pb-16 pt-4 sm:px-6 lg:px-8">
         {heroBook ? <Hero book={heroBook} /> : null}
 
+        {!personalization.onboarding_completed ? (
+  <div className="mt-6 rounded-3xl border border-yellow-400/20 bg-yellow-400/10 p-5 text-sm text-yellow-50 shadow-xl">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p className="font-medium text-white">Personalize your reading experience</p>
+        <p className="mt-1 text-yellow-50/75">
+          Choose your favorite genres and goals so BookBox can rank books around
+          what you care about.
+        </p>
+      </div>
+
+      <Link
+        href="/onboarding?next=/"
+        className="w-fit rounded-2xl bg-white px-4 py-3 text-sm font-medium text-black transition hover:bg-white/90"
+      >
+        Personalize now
+      </Link>
+    </div>
+  </div>
+) : personalization.preferred_genres.length > 0 ? (
+  <div className="mt-6 rounded-3xl border border-white/10 bg-white/[0.04] p-4 text-sm text-white/65">
+    <p className="font-medium text-white">Personalized for your reading taste</p>
+    <p className="mt-1">
+      Prioritizing{" "}
+      <span className="text-white">
+        {personalization.preferred_genres.slice(0, 3).join(", ")}
+      </span>
+      {personalization.preferred_genres.length > 3 ? " and more" : ""}.
+    </p>
+  </div>
+) : null}
+
         <div className="mt-10 space-y-10">
+          <Row
+            title={
+              <span className="flex items-center gap-x-2">
+                Recommended for You
+                <Sparkles className="size-5 shrink-0 text-yellow-400" />
+              </span>
+            }
+            books={recommendedBooks}
+            limit={8}
+            viewAllHref="/discover?sort=recommended"
+            variant="large"
+          />
+
           <Row
             title={
               <span className="flex items-center gap-x-2">
