@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { login } from "@/lib/auth-api";
 
@@ -9,10 +8,26 @@ interface LoginPageClientProps {
     nextPath: string;
 }
 
-export default function LoginPageClient({
-    nextPath,
-}: LoginPageClientProps) {
-    const router = useRouter();
+function normalizeNextPath(path: string): string {
+    if (!path || path.trim() === "") {
+        return "/library";
+    }
+
+    // Preventing external redirects.
+    if (!path.startsWith("/") || path.startsWith("//")) {
+        return "/library";
+    }
+
+    // Fixing old route shape if any redirect still sends /books/:id.
+    if (path.startsWith("/books/")) {
+        return path.replace("/books/", "/book/");
+    }
+
+    return path;
+}
+
+export default function LoginPageClient({ nextPath }: LoginPageClientProps) {
+    const safeNextPath = normalizeNextPath(nextPath);
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -21,16 +36,21 @@ export default function LoginPageClient({
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+
         setIsSubmitting(true);
         setError(null);
 
         try {
             await login({ email, password });
-            router.push(nextPath || "/library");
-            router.refresh();
+
+            /**
+             * Production-safe redirect:
+             * Forces a fresh document request so HTTP-only auth cookies are included
+             * before protected server components run.
+             */
+            window.location.assign(safeNextPath);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Login failed");
-        } finally {
             setIsSubmitting(false);
         }
     };
@@ -41,9 +61,11 @@ export default function LoginPageClient({
                 <p className="text-xs uppercase tracking-[0.24em] text-white/45">
                     Welcome back
                 </p>
+
                 <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white">
                     Log in
                 </h1>
+
                 <p className="mt-3 text-sm leading-7 text-white/65">
                     Access your library, reading progress, bookmarks, and settings.
                 </p>
@@ -54,7 +76,7 @@ export default function LoginPageClient({
                         <input
                             type="email"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            onChange={(event) => setEmail(event.target.value)}
                             required
                             className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-white/20 focus:bg-white/10"
                             placeholder="you@example.com"
@@ -66,16 +88,14 @@ export default function LoginPageClient({
                         <input
                             type="password"
                             value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            onChange={(event) => setPassword(event.target.value)}
                             required
                             className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-white/20 focus:bg-white/10"
                             placeholder="••••••••"
                         />
                     </div>
 
-                    {error ? (
-                        <p className="text-sm text-red-300">{error}</p>
-                    ) : null}
+                    {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
                     <button
                         type="submit"
@@ -89,7 +109,7 @@ export default function LoginPageClient({
                 <p className="mt-6 text-sm text-white/55">
                     Don&apos;t have an account?{" "}
                     <Link
-                        href={`/signup?next=${encodeURIComponent(nextPath)}`}
+                        href={`/signup?next=${encodeURIComponent(safeNextPath)}`}
                         className="text-white hover:text-white/80"
                     >
                         Create one
