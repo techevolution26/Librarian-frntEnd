@@ -8,6 +8,8 @@ import {
   type OnboardingPreferences,
 } from "@/lib/api";
 
+import { Heart, Puzzle } from "lucide-react";
+
 const genres = [
   "Productivity",
   "Business",
@@ -137,7 +139,13 @@ export default function OnboardingPageClient({ initialPreferences }: Props) {
 
         <div className="mt-3 max-w-3xl">
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            Build a reading experience around what matters to you.
+            Build a reading experience around what matters to you
+            <span className="inline-flex items-baseline">
+              <Puzzle
+                className="self-center w-8 h-8 ml-2 sm:w-10 sm:h-10 text-emerald-600 fill-emerald-200/50"
+                strokeWidth={2.5}
+              />.
+            </span>
           </h1>
           <p className="mt-4 text-sm leading-7 text-white/65 sm:text-base">
             These preferences help rank featured books, recommendations,

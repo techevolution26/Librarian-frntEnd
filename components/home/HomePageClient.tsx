@@ -190,8 +190,8 @@ export default function HomePageClient({
     (a, b) => Number(b.id) - Number(a.id),
   );
 
-  const continueReading = filteredBooks.slice(0, 4);
-  if (isServiceUnavailable) {
+  const continueReading: Book[] = [];
+  const starterPicks = personalizedBooks.slice(0, 4); if (isServiceUnavailable) {
     return (
       <main id="main-content" className="min-h-screen">
         <Navbar searchValue={searchValue} onSearchChange={setSearchValue} />
@@ -257,36 +257,36 @@ export default function HomePageClient({
         {heroBook ? <Hero book={heroBook} /> : null}
 
         {!personalization.onboarding_completed ? (
-  <div className="mt-6 rounded-3xl border border-yellow-400/20 bg-yellow-400/10 p-5 text-sm text-yellow-50 shadow-xl">
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <p className="font-medium text-white">Personalize your reading experience</p>
-        <p className="mt-1 text-yellow-50/75">
-          Choose your favorite genres and goals so BookBox can rank books around
-          what you care about.
-        </p>
-      </div>
+          <div className="mt-6 rounded-3xl border border-yellow-400/20 bg-yellow-400/10 p-5 text-sm text-yellow-50 shadow-xl">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-medium text-white">Personalize your reading experience</p>
+                <p className="mt-1 text-yellow-50/75">
+                  Choose your favorite genres and goals so BookBox can rank books around
+                  what you care about.
+                </p>
+              </div>
 
-      <Link
-        href="/onboarding?next=/"
-        className="w-fit rounded-2xl bg-white px-4 py-3 text-sm font-medium text-black transition hover:bg-white/90"
-      >
-        Personalize now
-      </Link>
-    </div>
-  </div>
-) : personalization.preferred_genres.length > 0 ? (
-  <div className="mt-6 rounded-3xl border border-white/10 bg-white/[0.04] p-4 text-sm text-white/65">
-    <p className="font-medium text-white">Personalized for your reading taste</p>
-    <p className="mt-1">
-      Prioritizing{" "}
-      <span className="text-white">
-        {personalization.preferred_genres.slice(0, 3).join(", ")}
-      </span>
-      {personalization.preferred_genres.length > 3 ? " and more" : ""}.
-    </p>
-  </div>
-) : null}
+              <Link
+                href="/onboarding?next=/"
+                className="w-fit rounded-2xl bg-white px-4 py-3 text-sm font-medium text-black transition hover:bg-white/90"
+              >
+                Personalize now
+              </Link>
+            </div>
+          </div>
+        ) : personalization.preferred_genres.length > 0 ? (
+          <div className="mt-6 rounded-3xl border border-white/10 bg-white/[0.04] p-4 text-sm text-white/65">
+            <p className="font-medium text-white">Personalized for your reading taste</p>
+            <p className="mt-1">
+              Prioritizing{" "}
+              <span className="text-white">
+                {personalization.preferred_genres.slice(0, 3).join(", ")}
+              </span>
+              {personalization.preferred_genres.length > 3 ? " and more" : ""}.
+            </p>
+          </div>
+        ) : null}
 
         <div className="mt-10 space-y-10">
           <Row
@@ -328,13 +328,23 @@ export default function HomePageClient({
             variant="compact"
           />
 
-          <Row
-            title="Continue Reading"
-            books={continueReading}
-            limit={4}
-            viewAllHref="/library"
-            variant="editorial"
-          />
+          {continueReading.length > 0 ? (
+            <Row
+              title="Continue Reading"
+              books={continueReading}
+              limit={4}
+              viewAllHref="/library"
+              variant="editorial"
+            />
+          ) : (
+            <Row
+              title="Start Reading"
+              books={starterPicks}
+              limit={4}
+              viewAllHref="/discover"
+              variant="editorial"
+            />
+          )}
         </div>
       </section>
 

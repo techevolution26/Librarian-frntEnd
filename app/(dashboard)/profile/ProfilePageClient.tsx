@@ -265,14 +265,26 @@ export default function ProfilePageClient({
                     </h3>
 
                     <div className="mt-5 flex flex-wrap gap-2">
-                        {profile.preferences.map((item) => (
-                            <span
-                                key={item}
-                                className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70"
-                            >
-                                {item}
-                            </span>
-                        ))}
+                        {profile.preferences.length > 0 ? (
+                            profile.preferences.map((item) => (
+                                <span
+                                    key={item}
+                                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70"
+                                >
+                                    {item}
+                                </span>
+                            ))
+                        ) : (
+                            <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-4 text-sm text-white/50">
+                                No preferences yet. Personalize your account to improve recommendations.
+                                <Link
+                                    href="/settings"
+                                    className="ml-2 font-medium text-white hover:text-white/80"
+                                >
+                                    Add preferences
+                                </Link>
+                            </div>
+                        )}
                     </div>
 
                     {profile.suggestedBook ? (
@@ -310,11 +322,23 @@ export default function ProfilePageClient({
                     </Link>
                 </div>
 
-                <div className="flex gap-4 overflow-x-auto pb-2 pr-2">
-                    {profile.favoriteBooks.map((book) => (
-                        <BookCard key={book.id} book={book} size="md" />
-                    ))}
-                </div>
+                {profile.favoriteBooks.length > 0 ? (
+                    <div className="flex gap-4 overflow-x-auto pb-2 pr-2">
+                        {profile.favoriteBooks.map((book) => (
+                            <BookCard key={book.id} book={book} size="md" />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="rounded-3xl border border-dashed border-white/10 bg-white/[0.03] p-8 text-sm text-white/50">
+                        Your library is empty. Explore books and save your first title.
+                        <Link
+                            href="/discover"
+                            className="ml-2 font-medium text-white hover:text-white/80"
+                        >
+                            Discover books
+                        </Link>
+                    </div>
+                )}
             </section>
 
             <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
@@ -323,24 +347,30 @@ export default function ProfilePageClient({
                 </p>
 
                 <div className="mt-5 space-y-4">
-                    {profile.recentActivity.map((item) => (
-                        <div
-                            key={item.id}
-                            className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/20 px-4 py-3"
-                        >
-                            <div>
-                                <p className="font-medium text-white">{item.title}</p>
-                                <p className="text-sm text-white/60">{item.action}</p>
-                            </div>
-
-                            <Link
-                                href={item.href}
-                                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 transition hover:bg-white/10"
+                    {profile.recentActivity.length > 0 ? (
+                        profile.recentActivity.map((item) => (
+                            <div
+                                key={item.id}
+                                className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/20 px-4 py-3"
                             >
-                                View
-                            </Link>
+                                <div>
+                                    <p className="font-medium text-white">{item.title}</p>
+                                    <p className="text-sm text-white/60">{item.action}</p>
+                                </div>
+
+                                <Link
+                                    href={item.href}
+                                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 transition hover:bg-white/10"
+                                >
+                                    View
+                                </Link>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-5 text-sm text-white/50">
+                            No recent activity yet. Start reading a book to build your profile history.
                         </div>
-                    ))}
+                    )}
                 </div>
             </section>
         </div>
