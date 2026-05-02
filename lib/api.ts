@@ -233,7 +233,7 @@ export interface CircleMemberUser {
 
 export interface CircleMember {
   id: number;
-  role: "owner" | "admin" | "member";
+  role: "owner" | "" | "member";
   status: "invited" | "active" | "removed";
   joined_at: string | null;
   user: CircleMemberUser;
@@ -485,16 +485,13 @@ export async function updateUserProfile(
   return handleJsonResponse<UserProfileResponse>(response);
 }
 
-export async function uploadAvatar(
-  file: File,
-  token: string | null = null,
-): Promise<UserProfileResponse> {
+export async function uploadAvatar(file: File): Promise<UserProfileResponse> {
   const formData = new FormData();
   formData.append("avatar_file", file);
 
-  const response = await apiFetch("/profile/avatar", {
+  const response = await fetch("/api/profile/avatar", {
     method: "POST",
-    headers: buildAuthHeaders(token),
+    credentials: "include",
     body: formData,
   });
 

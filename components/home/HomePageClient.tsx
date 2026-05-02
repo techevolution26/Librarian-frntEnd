@@ -262,7 +262,7 @@ export default function HomePageClient({
               <div>
                 <p className="font-medium text-white">Personalize your reading experience</p>
                 <p className="mt-1 text-yellow-50/75">
-                  Choose your favorite genres and goals so BookBox can rank books around
+                  Choose your favorite genres and goals so The Librarian can rank books around
                   what you care about.
                 </p>
               </div>
@@ -276,16 +276,17 @@ export default function HomePageClient({
             </div>
           </div>
         ) : personalization.preferred_genres.length > 0 ? (
-          <div className="mt-6 rounded-3xl border border-white/10 bg-white/[0.04] p-4 text-sm text-white/65">
+          <div className="mt-6 rounded-3xl border border-indigo-500/20 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent p-4 text-sm text-white/65">
             <p className="font-medium text-white">Personalized for your reading taste</p>
             <p className="mt-1">
               Prioritizing{" "}
-              <span className="text-white">
+              <span className="text-indigo-300 font-semibold">
                 {personalization.preferred_genres.slice(0, 3).join(", ")}
               </span>
               {personalization.preferred_genres.length > 3 ? " and more" : ""}.
             </p>
           </div>
+
         ) : null}
 
         <div className="mt-10 space-y-10">

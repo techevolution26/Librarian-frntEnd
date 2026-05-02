@@ -88,7 +88,7 @@ export default function ProfilePageClient({
     };
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 pb-32 sm:pb-20 lg:pb-12 px-4 sm:px-8 lg:px-12 w-full max-w-none">
             <section className="grid gap-6 rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_35%),linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] p-6 shadow-2xl sm:p-8 lg:grid-cols-[280px_1fr] lg:p-10">
                 <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
                     <div className="relative mx-auto h-28 w-28 overflow-hidden rounded-full border border-white/10 bg-white/5">

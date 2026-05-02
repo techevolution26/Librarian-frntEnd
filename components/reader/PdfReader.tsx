@@ -272,13 +272,15 @@ export default function PdfReader({
   const PageComponent = reactPdfModule?.Page as React.ComponentType<PageProps>;
 
   return (
-    <section className="space-y-4 rounded-[2rem] border border-white/10 bg-white/[0.03] p-3 sm:p-4">
-      <div className="sticky top-0 z-20 rounded-2xl border border-white/10 bg-neutral-950/90 p-3 backdrop-blur">
+    <section className="flex h-[calc(100dvh-1rem)] w-full max-w-none flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.03] shadow-2xl sm:h-[calc(100dvh-2rem)]">
+      {/* Toolbar - no sticky needed because only the PDF viewport scrolls */}
+      <div className="shrink-0 border-b border-white/10 bg-neutral-950/95 p-3 backdrop-blur sm:p-4">
         <div className="flex flex-col gap-4">
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-white sm:text-base">
               {title}
             </p>
+
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-white/55 sm:text-xs">
               <span>PDF reader</span>
               <span>
@@ -290,7 +292,7 @@ export default function PdfReader({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-[auto_auto_1fr_auto_auto_auto] sm:items-center">
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-[auto_auto_130px_1fr_auto] lg:items-center">
             <button
               type="button"
               onClick={goToPreviousPage}
@@ -309,7 +311,7 @@ export default function PdfReader({
               Next
             </button>
 
-            <div className="col-span-2 flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-2 sm:col-span-1">
+            <div className="col-span-2 flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-2 lg:col-span-1">
               <input
                 value={pageInput}
                 onChange={(e) => setPageInput(e.target.value)}
@@ -323,60 +325,39 @@ export default function PdfReader({
               <span className="text-sm text-white/45">/ {numPages || "—"}</span>
             </div>
 
-            <div className="col-span-2 flex items-center justify-between gap-2 sm:col-span-3 sm:justify-end">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={zoomOut}
-                  disabled={!!loadError}
-                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  −
-                </button>
+            <div className="col-span-2 flex items-center justify-center gap-2 lg:col-span-1 lg:justify-end">
+              <button
+                type="button"
+                onClick={zoomOut}
+                disabled={!!loadError}
+                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                −
+              </button>
 
-                <button
-                  type="button"
-                  onClick={resetZoom}
-                  disabled={!!loadError}
-                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  {Math.round(scale * 100)}%
-                </button>
+              <button
+                type="button"
+                onClick={resetZoom}
+                disabled={!!loadError}
+                className="min-w-16 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {Math.round(scale * 100)}%
+              </button>
 
-                <button
-                  type="button"
-                  onClick={zoomIn}
-                  disabled={!!loadError}
-                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  +
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={zoomIn}
+                disabled={!!loadError}
+                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                +
+              </button>
+            </div>
 
-              <div className="flex items-center gap-2">
-                {safeFileUrl ? (
-                  <>
-                    {/* <a
-                      href={safeFileUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10"
-                    >
-                      Open
-                    </a>
-
-                    <a
-                      href={safeFileUrl}
-                      download
-                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10"
-                    >
-                      Download
-                    </a> */}
-                  </>
-                ) : (
-                  <span className="text-xs text-white/45">File unavailable</span>
-                )}
-              </div>
+            <div className="hidden items-center justify-end gap-2 lg:flex">
+              {!safeFileUrl ? (
+                <span className="text-xs text-white/45">File unavailable</span>
+              ) : null}
             </div>
           </div>
 
@@ -389,97 +370,89 @@ export default function PdfReader({
         </div>
       </div>
 
-      <div className="flex min-h-[60vh] items-start justify-center overflow-hidden rounded-2xl border border-white/10 bg-neutral-900 p-2 sm:min-h-[72vh] sm:p-4">
-        {!reactPdfModule && !loadError ? (
-          <div className="py-16 text-center text-sm text-white/60">Loading PDF…</div>
-        ) : loadError ? (
-          <div className="flex w-full max-w-lg flex-col items-center justify-center gap-4 py-16 text-center">
-            <p className="text-lg font-semibold text-white">Book currently unavailable</p>
-            <p className="text-sm text-white/60">{loadError}</p>
-            {safeFileUrl ? (
-              <div className="flex flex-wrap justify-center gap-3">
-                <a
-                  href={safeFileUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/85 transition hover:bg-white/10"
-                >
-                  Try opening in new tab
-                </a>
-                <a
-                  href={safeFileUrl}
-                  download
-                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/85 transition hover:bg-white/10"
-                >
-                  Download PDF
-                </a>
-              </div>
-            ) : null}
-          </div>
-        ) : (
-          <DocumentComponent
-            file={safeFileUrl as string}
-            onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={onDocumentLoadError}
-            loading={
-              <div className="py-16 text-center text-sm text-white/60">
-                Loading PDF…
-              </div>
-            }
-            error={null}
-            className="max-w-full"
-          >
-            <PageComponent
-              pageNumber={pageNumber}
-              scale={scale}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
-              className="max-w-full overflow-hidden rounded-xl shadow-2xl"
-            />
-          </DocumentComponent>
-        )}
+      {/* PDF viewport - this is what scrolls, not the whole reader card */}
+      <div className="min-h-0 flex-1 overflow-auto bg-neutral-900 p-2 sm:p-4">
+        <div className="flex min-h-full w-full items-start justify-center">
+          {!reactPdfModule && !loadError ? (
+            <div className="py-16 text-center text-sm text-white/60">
+              Loading PDF…
+            </div>
+          ) : loadError ? (
+            <div className="flex min-h-full w-full max-w-lg flex-col items-center justify-center gap-4 py-16 text-center">
+              <p className="text-lg font-semibold text-white">
+                Book currently unavailable
+              </p>
+              <p className="text-sm text-white/60">{loadError}</p>
+            </div>
+          ) : (
+            <DocumentComponent
+              file={safeFileUrl as string}
+              onLoadSuccess={onDocumentLoadSuccess}
+              onLoadError={onDocumentLoadError}
+              loading={
+                <div className="py-16 text-center text-sm text-white/60">
+                  Loading PDF…
+                </div>
+              }
+              error={null}
+              className="flex max-w-full justify-center"
+            >
+              <PageComponent
+                pageNumber={pageNumber}
+                scale={scale}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+                className="max-w-full overflow-hidden rounded-xl shadow-2xl"
+              />
+            </DocumentComponent>
+          )}
+        </div>
       </div>
 
-      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        <button
-          type="button"
-          onClick={goToPreviousPage}
-          disabled={pageNumber <= 1 || !!loadError}
-          className="min-h-12 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          Previous page
-        </button>
+      {/* Bottom action bar - visually attached to reader */}
+      <div className="shrink-0 border-t border-white/10 bg-neutral-950/95 p-3 backdrop-blur sm:p-4">
+        <section className="grid grid-cols-3 gap-2">
+          <button
+            type="button"
+            onClick={goToPreviousPage}
+            disabled={pageNumber <= 1 || !!loadError}
+            className="min-h-11 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 sm:text-sm"
+          >
+            Previous
+          </button>
 
-        <button
-          type="button"
-          onClick={handleBookmark}
-          disabled={!!loadError}
-          className="min-h-12 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {bookmarkPage === pageNumber ? "Remove bookmark" : "Bookmark page"}
-        </button>
+          <button
+            type="button"
+            onClick={handleBookmark}
+            disabled={!!loadError}
+            className="min-h-11 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 sm:text-sm"
+          >
+            {bookmarkPage === pageNumber ? "Remove" : "Bookmark"}
+          </button>
 
-        <button
-          type="button"
-          onClick={goToNextPage}
-          disabled={!numPages || pageNumber >= numPages || !!loadError}
-          className="min-h-12 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 sm:col-span-2 xl:col-span-1"
-        >
-          Next page
-        </button>
-      </section>
+          <button
+            type="button"
+            onClick={goToNextPage}
+            disabled={!numPages || pageNumber >= numPages || !!loadError}
+            className="min-h-11 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 sm:text-sm"
+          >
+            Next
+          </button>
+        </section>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-white/50">
-        <span>
-          {loadError
-            ? "Document unavailable"
-            : isLoading
-              ? "Preparing document…"
-              : `${numPages || 0} pages total`}
-        </span>
-        <span>
-          {bookmarkPage ? `Bookmarked page ${bookmarkPage}` : "No bookmark saved"}
-        </span>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-[11px] text-white/50 sm:text-xs">
+          <span>
+            {loadError
+              ? "Document unavailable"
+              : isLoading
+                ? "Preparing document…"
+                : `${numPages || 0} pages total`}
+          </span>
+
+          <span>
+            {bookmarkPage ? `Bookmarked page ${bookmarkPage}` : "No bookmark saved"}
+          </span>
+        </div>
       </div>
     </section>
   );

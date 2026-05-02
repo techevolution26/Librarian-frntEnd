@@ -355,7 +355,7 @@ export default function SettingsPageClient({
     };
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 pb-32 sm:pb-20 lg:pb-12 px-4 sm:px-8 lg:px-12 w-full max-w-none">
             <section className="rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_35%),linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] p-6 shadow-2xl sm:p-8">
                 <p className="text-xs uppercase tracking-[0.24em] text-white/45">
                     Settings
@@ -411,7 +411,7 @@ export default function SettingsPageClient({
                 <div className="grid gap-4 md:grid-cols-3">
                     <SelectRow<ThemeOption>
                         label="Theme"
-                        description="Choose how BookBox should appear."
+                        description="Choose how The Librarian should appear."
                         value={settings.appearance.theme}
                         options={["system", "light", "dark"]}
                         onChange={(value) => updateAppearance("theme", value)}

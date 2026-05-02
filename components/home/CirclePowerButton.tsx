@@ -86,7 +86,11 @@ export default function CirclePowerButton() {
                                 key={item.href}
                                 href={item.href}
                                 className={[
-                                    "absolute z-10 flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-neutral-950/95 text-white shadow-2xl backdrop-blur transition-all duration-300",
+                                    "absolute z-10 flex h-12 w-12 items-center justify-center rounded-2xl border transition-all duration-300 shadow-2xl backdrop-blur-md",
+                                    // Amber Colorway
+                                    "border-amber-500/20 bg-neutral-900/95 text-amber-200/90",
+                                    // Hover: Becomes solid Gold with black icon for high contrast
+                                    "hover:border-amber-300 hover:bg-amber-400 hover:text-black hover:-translate-y-1",
                                     open
                                         ? `${positions[index]} scale-100 opacity-100`
                                         : "translate-x-0 translate-y-0 scale-50 opacity-0 pointer-events-none",
@@ -95,6 +99,7 @@ export default function CirclePowerButton() {
                             >
                                 <Icon className="h-5 w-5" />
                             </Link>
+
                         );
                     })}
 

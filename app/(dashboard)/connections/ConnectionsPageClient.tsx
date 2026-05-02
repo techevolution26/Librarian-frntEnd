@@ -113,7 +113,7 @@ export default function ConnectionsPageClient({
     }
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 pb-32 sm:pb-20 lg:pb-12 px-4 sm:px-8 lg:px-12 w-full max-w-none">
             <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 shadow-lg sm:p-6">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                     {/* add link icon inside */}

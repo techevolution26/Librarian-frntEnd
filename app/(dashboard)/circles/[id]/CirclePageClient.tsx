@@ -173,7 +173,7 @@ export default function CirclePageClient({
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="w-full max-w-none px-4 sm:px-8 lg:px-12 space-y-6 sm:space-y-8 pb-32 sm:pb-20 lg:pb-12">
       <section className="rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-5 sm:rounded-[2rem] sm:p-6 lg:p-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
@@ -411,55 +411,94 @@ export default function CirclePageClient({
       </section>
 
       {message ? (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/65">
-          {message}
+        <div className="relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.03] px-4 py-3 text-sm backdrop-blur-sm">
+          {/* Subtle side accent */}
+          <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-emerald-400 to-emerald-600" />
+
+          <div className="flex items-center gap-3">
+            <span className="text-emerald-50">{message}</span>
+          </div>
         </div>
       ) : null}
 
-      <section className="rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-4 sm:p-5 lg:p-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-lg font-semibold text-white">Progress feed</h2>
-          <span className="text-xs uppercase tracking-[0.16em] text-white/40">
+
+      <section className="rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-4 sm:p-5 lg:p-6 shadow-2xl">
+        {/* Header */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="h-2 w-2 rounded-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.8)]" />
+            <h2 className="text-lg font-semibold text-white tracking-tight">Progress feed</h2>
+          </div>
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 bg-white/5 px-2 py-1 rounded-md">
             Latest updates
           </span>
         </div>
 
-        <div className="mt-4 grid gap-3">
-          {progress.length > 0 ? (
-            progress.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-2xl border border-white/10 bg-black/20 p-4"
-              >
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-white">
-                      {item.user.full_name}
-                    </p>
-                    <p className="mt-1 text-sm font-medium text-white/85">
-                      {getProgressBookTitle(item)}
-                    </p>
+        {/* Scrollable Container with Fading Edges */}
+        <div className="relative">
+          <div
+            className="grid gap-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar"
+            style={{
+              maskImage: 'linear-gradient(to bottom, transparent, black 5%, black 95%, transparent)',
+              WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 5%, black 95%, transparent)'
+            }}
+          >
+            {progress.length > 0 ? (
+              progress.map((item) => (
+                <div
+                  key={item.id}
+                  className="group relative rounded-2xl border border-white/10 bg-white/[0.02] p-4 transition-all duration-300 hover:border-indigo-500/30 hover:bg-white/[0.06] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
+                >
+                  {/* Subtle Progress Background Glow */}
+                  <div
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                    style={{
+                      background: `radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 50%)`
+                    }}
+                  />
+
+                  <div className="relative flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-[12px] font-medium text-white/40 group-hover:text-indigo-300 transition-colors">
+                        {item.user.full_name}
+                      </p>
+                      <p className="mt-0.5 text-[15px] font-semibold text-white/90 leading-snug">
+                        {getProgressBookTitle(item)}
+                      </p>
+                    </div>
+
+                    {/* Enhanced Gradient Badge */}
+                    <div className="w-fit flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1.5 text-xs font-bold text-indigo-300 shadow-inner">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                      </span>
+                      {item.progress_percent}% <span className="opacity-30">•</span> Pg {item.current_page ?? "-"}
+                    </div>
                   </div>
 
-                  <div className="w-fit rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/55">
-                    {item.progress_percent}% • Page {item.current_page ?? "-"}
-                  </div>
+                  {item.note && (
+                    <div className="relative mt-3 rounded-xl bg-black/20 p-3">
+                      <p className="text-sm leading-relaxed text-white/60 italic">
+                        &ldquo;{item.note}&rdquo;
+                      </p>
+                    </div>
+                  )}
                 </div>
-
-                {item.note ? (
-                  <p className="mt-3 text-sm leading-6 text-white/75">
-                    {item.note}
-                  </p>
-                ) : null}
+              ))
+            ) : (
+              /* Enhanced Empty State */
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.01] py-12 text-center">
+                <div className="rounded-full bg-white/5 p-4 mb-3">
+                  <div className="h-6 w-6 border-2 border-white/20 rounded-md border-t-white/50" />
+                </div>
+                <p className="text-sm font-medium text-white/40">No progress updates yet.</p>
               </div>
-            ))
-          ) : (
-            <div className="rounded-2xl border border-dashed border-white/10 bg-black/10 p-5 text-sm text-white/45">
-              No progress updates yet.
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </section>
+
     </div>
   );
 }

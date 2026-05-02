@@ -34,7 +34,7 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
     ]);
 
     return (
-      <div className="mx-auto max-w-5xl space-y-6">
+      <div className="w-full max-w-none space-y-6 pb-12">
         <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 shadow-2xl backdrop-blur sm:p-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
