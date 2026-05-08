@@ -49,6 +49,7 @@ export default function SidebarClient({ sidebarSummary }: SidebarClientProps) {
     const pathname = usePathname();
     const streak = sidebarSummary?.reading_streak_days ?? 0;
     const initials = getInitials(sidebarSummary?.full_name);
+    const isAdmin = sidebarSummary?.role === "ADMIN";
 
     return (
         <>
@@ -177,6 +178,20 @@ export default function SidebarClient({ sidebarSummary }: SidebarClientProps) {
                             </Link>
                         );
                     })}
+                    {isAdmin && (
+                        <Link
+                            href="/admin"
+                            className={[
+                                "flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition",
+                                pathname === "/admin"
+                                    ? "bg-white/10 text-white ring-1 ring-white/10"
+                                    : "text-white/65 hover:bg-white/5 hover:text-white",
+                            ].join(" ")}
+                        >
+                            <Settings2 className="h-4 w-4 shrink-0" />
+                            <span>Admin</span>
+                        </Link>
+                    )}
                 </nav>
 
                 <div className="mt-auto">

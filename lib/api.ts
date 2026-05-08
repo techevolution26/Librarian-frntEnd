@@ -187,6 +187,7 @@ export interface CircleProgressUpdate {
 export interface SidebarSummary {
   full_name: string;
   avatar_url: string | null;
+  role: string;
   reading_streak_days: number;
 }
 
@@ -288,6 +289,7 @@ export interface CurrentUser {
   id: number;
   email: string;
   full_name: string;
+  role: "USER" | "ADMIN" | string;
   avatar_url: string | null;
   plan?: string;
 }
@@ -321,6 +323,17 @@ export interface OnboardingPreferences {
   preferred_lengths: string[];
   weekly_target: string | null;
   onboarding_completed: boolean;
+}
+
+export interface AdminBookUploadPayload {
+  title: string;
+  author: string;
+  cover: string;
+  description: string;
+  rating: number;
+  pages: number;
+  genreCsv: string;
+  pdfFile: File;
 }
 
 export async function getCurrentUser(
@@ -933,4 +946,43 @@ export async function logoutUser(): Promise<void> {
   if (!response.ok) {
     throw new ApiError("Failed to logout", response.status, null);
   }
+}
+
+export async function adminUploadPdfBook(
+  payload: AdminBookUploadPayload,
+): Promise<Book> {
+  const formData = new FormData();
+
+  formData.append("title", payload.title);
+  formData.append("author", payload.author);
+  formData.append("cover", payload.cover);
+  formData.append("description", payload.description);
+  formData.append("rating", String(payload.rating));
+  formData.append("pages", String(payload.pages));
+  formData.append("genre_csv", payload.genreCsv);
+  formData.append("pdf_file", payload.pdfFile);
+
+  const response = await fetch("/api/admin/books/upload-pdf", {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+  });
+
+  return handleJsonResponse<Book>(response);
+}
+
+export async function adminUpdateBookPdf(
+  bookId: number,
+  pdfFile: File,
+): Promise<Book> {
+  const formData = new FormData();
+  formData.append("pdf_file", pdfFile);
+
+  const response = await fetch(`/api/admin/books/${bookId}/update-pdf`, {
+    method: "PATCH",
+    credentials: "include",
+    body: formData,
+  });
+
+  return handleJsonResponse<Book>(response);
 }
