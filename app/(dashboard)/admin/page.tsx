@@ -1,7 +1,9 @@
-import { getBooks } from "@/lib/api";
+import { adminListBooks } from "@/lib/api";
+import { requireAccessToken } from "@/lib/server-auth";
 
 export default async function AdminPage() {
-    const books = await getBooks();
+    const token = await requireAccessToken("/admin");
+    const books = await adminListBooks(token);
 
     return (
         <div className="grid gap-4 md:grid-cols-3">

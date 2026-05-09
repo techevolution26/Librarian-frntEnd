@@ -122,7 +122,7 @@ export default function AdminBookEditClient({ initialBook }: Props) {
         : await adminArchiveBook(book.id);
 
       setBook(updated);
-      setMessage(book.archived_at ? "Book restored." : "Book archived.");
+      setMessage(updated.archived_at ? "Book archived." : "Book restored.");
       router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Archive action failed.");

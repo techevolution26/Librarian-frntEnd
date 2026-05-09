@@ -1,7 +1,9 @@
 import { adminListActivity } from "@/lib/api";
+import { requireAccessToken } from "@/lib/server-auth";
 
 export default async function AdminActivityPage() {
-    const logs = await adminListActivity();
+    const token = await requireAccessToken("/admin/activity");
+    const logs = await adminListActivity(token);
 
     return (
         <div className="space-y-5">
@@ -32,7 +34,9 @@ export default async function AdminActivityPage() {
                         ))}
                     </div>
                 ) : (
-                    <div className="p-6 text-sm text-white/55">No admin activity yet.</div>
+                    <div className="p-6 text-sm text-white/55">
+                        No admin activity yet.
+                    </div>
                 )}
             </div>
         </div>

@@ -1,21 +1,22 @@
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
-
-export interface Book {
-  id: number;
-  title: string;
-  author: string;
-  cover: string;
-  description: string;
-  rating: number;
-  pages: number;
-  genre: string[];
-  source_type: "text" | "pdf" | string;
-  source_url: string | null;
-  mime_type: string | null;
-  archived_at?: string | null;
-  visibility: "draft" | "published";
-}
+import type { Book } from "@/lib/types";
+// export interface Book {
+//   id: number;
+//   title: string;
+//   author: string;
+//   cover: string;
+//   description: string;
+//   rating: number;
+//   pages: number;
+//   genre: string[];
+//   source_type: "text" | "pdf" | string;
+//   source_url: string | null;
+//   mime_type: string | null;
+//   archived_at?: string | null;
+//   visibility: "draft" | "published";
+//   is_featured: boolean;
+// }
 
 export interface BookContent {
   id: number;
@@ -1011,7 +1012,16 @@ export async function adminUpdateBookPdf(
   return handleJsonResponse<Book>(response);
 }
 
-export async function adminListBooks(): Promise<Book[]> {
+export async function adminListBooks(token?: string): Promise<Book[]> {
+  if (token) {
+    const response = await apiFetch("/books/admin/list?include_archived=true", {
+      headers: buildAuthHeaders(token),
+      cache: "no-store",
+    });
+
+    return handleJsonResponse<Book[]>(response);
+  }
+
   const response = await fetch("/api/admin/books", {
     credentials: "include",
     cache: "no-store",
@@ -1090,14 +1100,6 @@ export async function adminDeleteBook(bookId: number): Promise<void> {
   }
 }
 
-export async function adminListActivity(): Promise<AdminActivityLog[]> {
-  const response = await fetch("/api/admin/activity", {
-    credentials: "include",
-    cache: "no-store",
-  });
-
-  return handleJsonResponse<AdminActivityLog[]>(response);
-}
 
 export async function adminFeatureBook(bookId: number): Promise<Book> {
   const response = await fetch(`/api/admin/books/${bookId}/feature`, {
@@ -1117,11 +1119,34 @@ export async function adminUnfeatureBook(bookId: number): Promise<Book> {
   return handleJsonResponse<Book>(response);
 }
 
-// export async function adminActivityLog(): Promise<AdminActivityLog[]> {
-//   const response = await fetch("/api/admin/activity", {
-//     credentials: "include",
-//     cache: "no-store",
-//   });
+export async function adminListActivity(
+  token?: string,
+): Promise<AdminActivityLog[]> {
+  if (token) {
+    const response = await apiFetch("/books/admin/activity?limit=50", {
+      headers: buildAuthHeaders(token),
+      cache: "no-store",
+    });
 
-//   return handleJsonResponse<AdminActivityLog[]>(response);
-// }
+    return handleJsonResponse<AdminActivityLog[]>(response);
+  }
+
+  const response = await fetch("/api/admin/activity", {
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  return handleJsonResponse<AdminActivityLog[]>(response);
+}
+
+export async function adminGetBookById(
+  bookId: number,
+  token: string,
+): Promise<Book> {
+  const response = await apiFetch(`/books/admin/${bookId}`, {
+    headers: buildAuthHeaders(token),
+    cache: "no-store",
+  });
+
+  return handleJsonResponse<Book>(response);
+}

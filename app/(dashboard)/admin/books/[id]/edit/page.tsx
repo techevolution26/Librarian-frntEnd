@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { getBookById } from "@/lib/api";
+import { adminGetBookById } from "@/lib/api";
+import { requireAccessToken } from "@/lib/server-auth";
 import AdminBookEditClient from "./AdminBookEditClient";
 
 interface AdminBookEditPageProps {
@@ -18,7 +19,8 @@ export default async function AdminBookEditPage({
     notFound();
   }
 
-  const book = await getBookById(bookId);
+  const token = await requireAccessToken(`/admin/books/${bookId}/edit`);
+  const book = await adminGetBookById(bookId, token);
 
   return <AdminBookEditClient initialBook={book} />;
 }
