@@ -13,6 +13,8 @@ export interface Book {
   source_type: "text" | "pdf" | string;
   source_url: string | null;
   mime_type: string | null;
+  archived_at?: string | null;
+  visibility: "draft" | "published";
 }
 
 export interface BookContent {
@@ -187,7 +189,7 @@ export interface CircleProgressUpdate {
 export interface SidebarSummary {
   full_name: string;
   avatar_url: string | null;
-  role: string;
+  role: "USER" | "ADMIN" | string;
   reading_streak_days: number;
 }
 
@@ -335,6 +337,28 @@ export interface AdminBookUploadPayload {
   genreCsv: string;
   pdfFile: File;
 }
+
+export interface AdminActivityLog {
+  id: number;
+  admin_user_id: number | null;
+  action: string;
+  entity_type: string;
+  entity_id: number | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface AdminBookMetadataPayload {
+  title: string;
+  author: string;
+  cover: string;
+  description: string;
+  rating: number;
+  pages: number;
+  genreCsv: string;
+  visibility: "draft" | "published";
+}
+
 
 export async function getCurrentUser(
   token: string | null,
@@ -973,10 +997,10 @@ export async function adminUploadPdfBook(
 
 export async function adminUpdateBookPdf(
   bookId: number,
-  pdfFile: File,
+  file: File,
 ): Promise<Book> {
   const formData = new FormData();
-  formData.append("pdf_file", pdfFile);
+  formData.append("pdf_file", file);
 
   const response = await fetch(`/api/admin/books/${bookId}/update-pdf`, {
     method: "PATCH",
@@ -986,3 +1010,118 @@ export async function adminUpdateBookPdf(
 
   return handleJsonResponse<Book>(response);
 }
+
+export async function adminListBooks(): Promise<Book[]> {
+  const response = await fetch("/api/admin/books", {
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  return handleJsonResponse<Book[]>(response);
+}
+
+export async function adminUpdateBookMetadata(
+  bookId: number,
+  payload: AdminBookMetadataPayload,
+): Promise<Book> {
+  const formData = new FormData();
+
+  formData.append("title", payload.title);
+  formData.append("author", payload.author);
+  formData.append("cover", payload.cover);
+  formData.append("description", payload.description);
+  formData.append("rating", String(payload.rating));
+  formData.append("pages", String(payload.pages));
+  formData.append("genre_csv", payload.genreCsv);
+  formData.append("visibility", payload.visibility);
+
+  const response = await fetch(`/api/admin/books/${bookId}`, {
+    method: "PATCH",
+    credentials: "include",
+    body: formData,
+  });
+
+  return handleJsonResponse<Book>(response);
+}
+
+export async function adminUploadBookCover(
+  bookId: number,
+  file: File,
+): Promise<Book> {
+  const formData = new FormData();
+  formData.append("cover_file", file);
+
+  const response = await fetch(`/api/admin/books/${bookId}/cover`, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+  });
+
+  return handleJsonResponse<Book>(response);
+}
+
+
+export async function adminArchiveBook(bookId: number): Promise<Book> {
+  const response = await fetch(`/api/admin/books/${bookId}/archive`, {
+    method: "PATCH",
+    credentials: "include",
+  });
+
+  return handleJsonResponse<Book>(response);
+}
+
+export async function adminRestoreBook(bookId: number): Promise<Book> {
+  const response = await fetch(`/api/admin/books/${bookId}/restore`, {
+    method: "PATCH",
+    credentials: "include",
+  });
+
+  return handleJsonResponse<Book>(response);
+}
+
+export async function adminDeleteBook(bookId: number): Promise<void> {
+  const response = await fetch(`/api/admin/books/${bookId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    await handleJsonResponse(response);
+  }
+}
+
+export async function adminListActivity(): Promise<AdminActivityLog[]> {
+  const response = await fetch("/api/admin/activity", {
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  return handleJsonResponse<AdminActivityLog[]>(response);
+}
+
+export async function adminFeatureBook(bookId: number): Promise<Book> {
+  const response = await fetch(`/api/admin/books/${bookId}/feature`, {
+    method: "PATCH",
+    credentials: "include",
+  });
+
+  return handleJsonResponse<Book>(response);
+}
+
+export async function adminUnfeatureBook(bookId: number): Promise<Book> {
+  const response = await fetch(`/api/admin/books/${bookId}/unfeature`, {
+    method: "PATCH",
+    credentials: "include",
+  });
+
+  return handleJsonResponse<Book>(response);
+}
+
+// export async function adminActivityLog(): Promise<AdminActivityLog[]> {
+//   const response = await fetch("/api/admin/activity", {
+//     credentials: "include",
+//     cache: "no-store",
+//   });
+
+//   return handleJsonResponse<AdminActivityLog[]>(response);
+// }

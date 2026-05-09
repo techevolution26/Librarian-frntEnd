@@ -6,12 +6,10 @@ interface RouteContext {
   }>;
 }
 
-export async function PATCH(request: Request, context: RouteContext) {
+export async function PATCH(_request: Request, context: RouteContext) {
   const { id } = await context.params;
-  const formData = await request.formData();
 
-  return proxyAdminRequest(`/books/${id}/update-pdf`, {
+  return proxyAdminRequest(`/books/${id}/archive`, {
     method: "PATCH",
-    body: formData,
   });
 }

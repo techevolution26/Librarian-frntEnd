@@ -10,6 +10,9 @@ export interface Book {
   source_type?: "text" | "pdf" | string;
   source_url: string | null;
   mime_type?: string | null;
+  archived_at?: string | null;
+  visibility: "draft" | "published" | string;
+  is_featured?: boolean;
 }
 
 export type LibraryStatus = "reading" | "saved" | "finished";

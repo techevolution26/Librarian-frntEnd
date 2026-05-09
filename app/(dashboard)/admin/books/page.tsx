@@ -44,6 +44,23 @@ export default async function AdminBooksPage() {
                 <p className="text-sm text-white/50">
                   {book.genre?.join(", ") || "No genres"}
                 </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-xs text-white/60">
+                    {book.visibility ?? "published"}
+                  </span>
+
+                  {book.is_featured ? (
+                    <span className="rounded-full border border-yellow-400/20 bg-yellow-400/10 px-2 py-1 text-xs text-yellow-100">
+                      Featured
+                    </span>
+                  ) : null}
+
+                  {book.archived_at ? (
+                    <span className="rounded-full border border-red-400/20 bg-red-500/10 px-2 py-1 text-xs text-red-100">
+                      Archived
+                    </span>
+                  ) : null}
+                </div>
               </div>
 
               <p className="text-sm text-white/65">{book.author}</p>

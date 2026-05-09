@@ -40,6 +40,12 @@ export default async function AdminLayout({
                     >
                         Upload book
                     </Link>
+                    <Link
+                        href="/admin/activity"
+                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:bg-white/10"
+                    >
+                        Activity
+                    </Link>
                 </div>
             </section>
 

@@ -11,10 +11,11 @@ import {
     UserRound,
     MessageCirclePlus,
     Infinity,
+    Shield,
 } from "lucide-react";
 import type { SidebarSummary } from "@/lib/api";
 
-const navItems = [
+const baseNavItems = [
     { href: "/", label: "Home", icon: Home },
     { href: "/library", label: "Library", icon: BookOpen },
     { href: "/discover", label: "Discover", icon: Compass },
@@ -47,15 +48,22 @@ function getInitials(name: string | undefined): string {
 
 export default function SidebarClient({ sidebarSummary }: SidebarClientProps) {
     const pathname = usePathname();
+
     const streak = sidebarSummary?.reading_streak_days ?? 0;
     const initials = getInitials(sidebarSummary?.full_name);
     const isAdmin = sidebarSummary?.role === "ADMIN";
 
+    const visibleNavItems = [
+        ...baseNavItems,
+        ...(isAdmin ? [{ href: "/admin", label: "Admin", icon: Shield }] : []),
+    ];
+
     return (
         <>
+            {/* Mobile bottom nav */}
             <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-neutral-950/95 px-2 py-1 backdrop-blur-xl md:hidden">
                 <div className="flex items-center gap-1 overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                    {navItems.map((item) => {
+                    {visibleNavItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = isItemActive(pathname, item.href);
 
@@ -78,6 +86,7 @@ export default function SidebarClient({ sidebarSummary }: SidebarClientProps) {
                 </div>
             </nav>
 
+            {/* Tablet icon sidebar */}
             <aside className="hidden h-screen w-20 shrink-0 border-r border-white/10 bg-neutral-950/95 px-3 py-6 md:flex lg:hidden">
                 <div className="flex h-full flex-col items-center">
                     <Link
@@ -93,12 +102,14 @@ export default function SidebarClient({ sidebarSummary }: SidebarClientProps) {
                                 className="h-full w-full object-cover"
                             />
                         ) : (
-                            <span className="text-sm font-semibold text-white">{initials}</span>
+                            <span className="text-sm font-semibold text-white">
+                                {initials}
+                            </span>
                         )}
                     </Link>
 
                     <nav className="flex w-full flex-col items-center gap-2">
-                        {navItems.map((item) => {
+                        {visibleNavItems.map((item) => {
                             const Icon = item.icon;
                             const isActive = isItemActive(pathname, item.href);
 
@@ -126,6 +137,7 @@ export default function SidebarClient({ sidebarSummary }: SidebarClientProps) {
                 </div>
             </aside>
 
+            {/* Desktop full sidebar */}
             <aside className="hidden h-screen w-72 shrink-0 border-r border-white/10 bg-neutral-950/95 px-5 py-6 lg:flex lg:flex-col">
                 <div className="mb-8">
                     <Link href="/" className="inline-flex items-center gap-3">
@@ -139,9 +151,12 @@ export default function SidebarClient({ sidebarSummary }: SidebarClientProps) {
                                     className="h-full w-full object-cover"
                                 />
                             ) : (
-                                <span className="text-sm font-semibold text-white">{initials}</span>
+                                <span className="text-sm font-semibold text-white">
+                                    {initials}
+                                </span>
                             )}
                         </div>
+
                         <div>
                             <h1 className="text-lg font-semibold tracking-tight text-white">
                                 Librarian
@@ -158,7 +173,7 @@ export default function SidebarClient({ sidebarSummary }: SidebarClientProps) {
                         Navigation
                     </p>
 
-                    {navItems.map((item) => {
+                    {visibleNavItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = isItemActive(pathname, item.href);
 
@@ -175,23 +190,15 @@ export default function SidebarClient({ sidebarSummary }: SidebarClientProps) {
                             >
                                 <Icon className="h-4 w-4 shrink-0" />
                                 <span>{item.label}</span>
+
+                                {item.href === "/admin" ? (
+                                    <span className="ml-auto rounded-full border border-red-400/20 bg-red-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-red-100">
+                                        Admin
+                                    </span>
+                                ) : null}
                             </Link>
                         );
                     })}
-                    {isAdmin && (
-                        <Link
-                            href="/admin"
-                            className={[
-                                "flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition",
-                                pathname === "/admin"
-                                    ? "bg-white/10 text-white ring-1 ring-white/10"
-                                    : "text-white/65 hover:bg-white/5 hover:text-white",
-                            ].join(" ")}
-                        >
-                            <Settings2 className="h-4 w-4 shrink-0" />
-                            <span>Admin</span>
-                        </Link>
-                    )}
                 </nav>
 
                 <div className="mt-auto">
@@ -199,10 +206,14 @@ export default function SidebarClient({ sidebarSummary }: SidebarClientProps) {
                         <p className="text-xs uppercase tracking-[0.2em] text-white/40">
                             Reading streak
                         </p>
+
                         <div className="mt-3 flex items-end gap-2">
-                            <span className="text-3xl font-semibold text-white">{streak}</span>
+                            <span className="text-3xl font-semibold text-white">
+                                {streak}
+                            </span>
                             <span className="pb-1 text-sm text-white/55">days active</span>
                         </div>
+
                         <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
                             <div
                                 className="h-full rounded-full bg-white/80"
