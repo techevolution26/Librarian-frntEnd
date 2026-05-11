@@ -360,6 +360,22 @@ export interface AdminBookMetadataPayload {
   visibility: "draft" | "published";
 }
 
+export interface AdminBookListResponse {
+  items: Book[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
+export interface AdminListBooksParams {
+  q?: string;
+  visibility?: "all" | "draft" | "published";
+  status?: "all" | "active" | "archived";
+  page?: number;
+  limit?: number;
+}
+
 
 export async function getCurrentUser(
   token: string | null,
@@ -1012,22 +1028,41 @@ export async function adminUpdateBookPdf(
   return handleJsonResponse<Book>(response);
 }
 
-export async function adminListBooks(token?: string): Promise<Book[]> {
+export async function adminListBooks(
+  token?: string,
+  params: AdminListBooksParams = {},
+): Promise<AdminBookListResponse> {
+  const searchParams = new URLSearchParams();
+
+  if (params.q) searchParams.set("q", params.q);
+  if (params.visibility) searchParams.set("visibility", params.visibility);
+  if (params.status) searchParams.set("status", params.status);
+  if (params.page) searchParams.set("page", String(params.page));
+  if (params.limit) searchParams.set("limit", String(params.limit));
+
+  const query = searchParams.toString();
+  const path = query
+    ? `/books/admin/list?${query}`
+    : "/books/admin/list";
+
   if (token) {
-    const response = await apiFetch("/books/admin/list?include_archived=true", {
+    const response = await apiFetch(path, {
       headers: buildAuthHeaders(token),
       cache: "no-store",
     });
 
-    return handleJsonResponse<Book[]>(response);
+    return handleJsonResponse<AdminBookListResponse>(response);
   }
 
-  const response = await fetch("/api/admin/books", {
-    credentials: "include",
-    cache: "no-store",
-  });
+  const response = await fetch(
+    query ? `/api/admin/books?${query}` : "/api/admin/books",
+    {
+      credentials: "include",
+      cache: "no-store",
+    },
+  );
 
-  return handleJsonResponse<Book[]>(response);
+  return handleJsonResponse<AdminBookListResponse>(response);
 }
 
 export async function adminUpdateBookMetadata(

@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { requireAdmin } from "@/lib/admin-auth";
+import AdminNavClient from "@/components/layout/AdminNavClient";
 
 export default async function AdminLayout({
     children,
@@ -10,42 +10,32 @@ export default async function AdminLayout({
 
     return (
         <div className="space-y-8">
-            <section className="rounded-[2rem] border border-white/10 bg-red-500/5 p-6 shadow-xl">
-                <p className="text-xs uppercase tracking-[0.24em] text-red-200/60">
-                    Admin console
-                </p>
-                <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">
-                    BookBox Administration
-                </h1>
-                <p className="mt-3 max-w-3xl text-sm leading-7 text-white/65">
-                    Manage book uploads, PDF files, metadata, and catalog operations.
-                </p>
+            <section className="sticky top-4 z-20 overflow-hidden rounded-[2rem] border border-white/10 bg-neutral-950/90 shadow-2xl backdrop-blur-xl">
+                <div className="border-b border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(248,113,113,0.18),transparent_34%),linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] p-6">
+                    <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                        <div>
+                            <p className="inline-flex rounded-full border border-red-400/20 bg-red-500/10 px-3 py-1 font-mono text-xs uppercase tracking-[0.2em] text-red-100">
+                                admin.console
+                            </p>
 
-                <div className="mt-5 flex flex-wrap gap-3">
-                    <Link
-                        href="/admin"
-                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:bg-white/10"
-                    >
-                        Overview
-                    </Link>
-                    <Link
-                        href="/admin/books"
-                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:bg-white/10"
-                    >
-                        Books
-                    </Link>
-                    <Link
-                        href="/admin/books/new"
-                        className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-white/90"
-                    >
-                        Upload book
-                    </Link>
-                    <Link
-                        href="/admin/activity"
-                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:bg-white/10"
-                    >
-                        Activity
-                    </Link>
+                            <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white">
+                                BookBox
+                            </h1>
+
+                            <p className="mt-2 max-w-3xl text-sm leading-7 text-white/60">
+                                Manage book uploads, PDF files, metadata, featured books,
+                                visibility, archive state, and catalog operations.
+                            </p>
+                        </div>
+
+                        <div className="rounded-2xl border border-white/10 bg-black/25 px-4 py-3 font-mono text-xs text-white/45">
+                            <p>scope: catalog_admin</p>
+                            <p>mode: protected</p>
+                            <p>access: role.ADMIN</p>
+                        </div>
+                    </div>
+
+                    <AdminNavClient />
                 </div>
             </section>
 

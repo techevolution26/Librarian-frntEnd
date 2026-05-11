@@ -87,7 +87,7 @@ export default function SidebarClient({ sidebarSummary }: SidebarClientProps) {
             </nav>
 
             {/* Tablet icon sidebar */}
-            <aside className="hidden h-screen w-20 shrink-0 border-r border-white/10 bg-neutral-950/95 px-3 py-6 md:flex lg:hidden">
+            <aside className="sticky top-0 hidden h-screen w-20 shrink-0 self-start border-r border-white/10 bg-neutral-950/95 px-3 py-6 md:flex lg:hidden">
                 <div className="flex h-full flex-col items-center">
                     <Link
                         href="/"
@@ -108,7 +108,7 @@ export default function SidebarClient({ sidebarSummary }: SidebarClientProps) {
                         )}
                     </Link>
 
-                    <nav className="flex w-full flex-col items-center gap-2">
+                    <nav className="flex flex-1 w-full min-h-0 flex-col items-center gap-2 overflow-y-auto">
                         {visibleNavItems.map((item) => {
                             const Icon = item.icon;
                             const isActive = isItemActive(pathname, item.href);
@@ -138,7 +138,7 @@ export default function SidebarClient({ sidebarSummary }: SidebarClientProps) {
             </aside>
 
             {/* Desktop full sidebar */}
-            <aside className="hidden h-screen w-72 shrink-0 border-r border-white/10 bg-neutral-950/95 px-5 py-6 lg:flex lg:flex-col">
+            <aside className="sticky top-0 hidden h-screen w-72 shrink-0 self-start border-r border-white/10 bg-neutral-950/95 px-5 py-6 lg:flex lg:flex-col">
                 <div className="mb-8">
                     <Link href="/" className="inline-flex items-center gap-3">
                         <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/10">
@@ -200,7 +200,6 @@ export default function SidebarClient({ sidebarSummary }: SidebarClientProps) {
                         );
                     })}
                 </nav>
-
                 <div className="mt-auto">
                     <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
                         <p className="text-xs uppercase tracking-[0.2em] text-white/40">

@@ -5,7 +5,8 @@ import { LayersPlus, Library, List, Star, Telescope } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import BookCard from "@/components/BookCard";
-import type { Book, DiscoverSort, DiscoverStats } from "@/lib/api";
+import type {DiscoverSort, DiscoverStats } from "@/lib/api";
+import { Book } from "@/lib/types";
 
 interface DiscoverPageClientProps {
   genres: string[];
