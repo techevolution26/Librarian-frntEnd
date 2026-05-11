@@ -19,7 +19,7 @@ export default async function AdminLayout({
                             </p>
 
                             <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white">
-                                BookBox
+                                The Librarian
                             </h1>
 
                             <p className="mt-2 max-w-3xl text-sm leading-7 text-white/60">

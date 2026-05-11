@@ -44,7 +44,7 @@ export default async function AdminPage() {
                             href="/admin/books/new"
                             className="w-fit rounded-2xl bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-white/90"
                         >
-                            Upload PDF book
+                            Upload book
                         </Link>
                     </div>
                 </div>

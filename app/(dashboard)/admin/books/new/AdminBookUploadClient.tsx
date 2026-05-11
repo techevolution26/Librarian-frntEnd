@@ -58,16 +58,16 @@ export default function AdminBookUploadClient() {
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                         <div>
                             <p className="inline-flex rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 font-mono text-xs uppercase tracking-[0.2em] text-cyan-100">
-                                admin.upload.pdf
+                                admin.book.upload
                             </p>
 
                             <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white">
-                                Upload PDF book
+                                Upload book
                             </h2>
 
                             <p className="mt-2 max-w-2xl text-sm leading-7 text-white/60">
-                                Add a new PDF-backed book to the catalog. Metadata controls how the
-                                book appears in public discovery, search, and recommendation flows.
+                                Add a new book to the catalog. Metadata controls how the
+                                book appears in public discovery,and recommendation flows.
                             </p>
                         </div>
 
@@ -103,7 +103,7 @@ export default function AdminBookUploadClient() {
                                     value={title}
                                     onChange={setTitle}
                                     required
-                                    placeholder="Mere Christianity"
+                                    placeholder="Book name"
                                 />
 
                                 <AdminInput
@@ -111,7 +111,7 @@ export default function AdminBookUploadClient() {
                                     value={author}
                                     onChange={setAuthor}
                                     required
-                                    placeholder="C.S. Lewis"
+                                    placeholder="Author name"
                                 />
 
                                 <AdminInput

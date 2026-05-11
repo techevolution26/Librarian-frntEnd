@@ -4,21 +4,20 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   Bell,
+  BookOpen,
+  Compass,
+  Home,
+  Infinity,
+  LibraryBig,
+  MessageCirclePlus,
   Search,
-  SlidersHorizontal,
+  Settings2,
+  Shield,
+  UserRound,
   X,
 } from "lucide-react";
-import {
-  ChangeEvent,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import {
-  usePathname,
-  useRouter,
-  useSearchParams,
-} from "next/navigation";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { SidebarSummary } from "@/lib/api";
 
 interface TopbarProps {
@@ -36,20 +35,47 @@ function getInitials(name: string | undefined): string {
     .toUpperCase();
 }
 
-/**
- * Keep topbar search separate from page-specific search.
- *
- * Admin books uses ?q=
- * Discover may use ?q=
- *
- * Topbar uses ?globalQ= to avoid hijacking page filters.
- */
-const TOPBAR_QUERY_KEY = "globalQ";
+function getPageTitle(pathname: string): string {
+  if (pathname === "/") return "Home";
+  if (pathname.startsWith("/library")) return "Library";
+  if (pathname.startsWith("/reader")) return "Reader";
+  if (pathname.startsWith("/book")) return "Book";
+  if (pathname.startsWith("/discover")) return "Discover";
+  if (pathname.startsWith("/circles")) return "Circles";
+  if (pathname.startsWith("/connections")) return "Connections";
+  if (pathname.startsWith("/profile")) return "Profile";
+  if (pathname.startsWith("/settings")) return "Settings";
+  if (pathname.startsWith("/admin")) return "Admin";
+  return "Librarian";
+}
+
+function getPageIcon(pathname: string) {
+  if (pathname === "/") return Home;
+  if (pathname.startsWith("/library")) return LibraryBig;
+  if (pathname.startsWith("/reader")) return BookOpen;
+  if (pathname.startsWith("/book")) return BookOpen;
+  if (pathname.startsWith("/discover")) return Compass;
+  if (pathname.startsWith("/circles")) return Infinity;
+  if (pathname.startsWith("/connections")) return MessageCirclePlus;
+  if (pathname.startsWith("/profile")) return UserRound;
+  if (pathname.startsWith("/settings")) return Settings2;
+  if (pathname.startsWith("/admin")) return Shield;
+
+  return LibraryBig;
+}
+
+const LIBRARY_QUERY_KEY = "q";
 
 export default function Topbar({ sidebarSummary }: TopbarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  const isLibraryPage =
+    pathname === "/library" || pathname.startsWith("/library/");
+
+  const pageTitle = getPageTitle(pathname);
+  const PageIcon = getPageIcon(pathname);
 
   const [hasMounted, setHasMounted] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -58,31 +84,30 @@ export default function Topbar({ sidebarSummary }: TopbarProps) {
   const initials = getInitials(fullName);
   const isAdmin = sidebarSummary?.role === "ADMIN";
 
-  const topbarSearchValue = useMemo(() => {
-    return searchParams.get(TOPBAR_QUERY_KEY) ?? "";
-  }, [searchParams]);
+  const librarySearchValue = useMemo(() => {
+    if (!isLibraryPage) return "";
+    return searchParams.get(LIBRARY_QUERY_KEY) ?? "";
+  }, [isLibraryPage, searchParams]);
 
   useEffect(() => {
     setHasMounted(true);
   }, []);
 
   useEffect(() => {
-    setInputValue(topbarSearchValue);
-  }, [topbarSearchValue]);
+    setInputValue(librarySearchValue);
+  }, [librarySearchValue]);
 
-  const updateQuery = (value: string) => {
+  const updateLibraryQuery = (value: string) => {
+    if (!isLibraryPage) return;
+
     const params = new URLSearchParams(searchParams.toString());
 
     if (value.trim()) {
-      params.set(TOPBAR_QUERY_KEY, value.trim());
+      params.set(LIBRARY_QUERY_KEY, value.trim());
     } else {
-      params.delete(TOPBAR_QUERY_KEY);
+      params.delete(LIBRARY_QUERY_KEY);
     }
 
-    /**
-     * If user uses topbar search, reset normal pagination.
-     * This avoids staying on page 5 after changing search.
-     */
     params.delete("page");
 
     const next = params.toString();
@@ -94,12 +119,12 @@ export default function Topbar({ sidebarSummary }: TopbarProps) {
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     setInputValue(value);
-    updateQuery(value);
+    updateLibraryQuery(value);
   };
 
   const clearQuery = () => {
     setInputValue("");
-    updateQuery("");
+    updateLibraryQuery("");
   };
 
   return (
@@ -107,46 +132,55 @@ export default function Topbar({ sidebarSummary }: TopbarProps) {
       <div className="px-3 py-2.5 sm:px-6 lg:px-8">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="min-w-0 flex-1">
-            <label htmlFor="topbar-search" className="sr-only">
-              Search across The Library
-            </label>
+            {isLibraryPage ? (
+              <div className="relative w-full lg:max-w-2xl">
+                <label htmlFor="library-topbar-search" className="sr-only">
+                  Search your library
+                </label>
 
-            <div className="relative w-full lg:max-w-2xl">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
 
-              <input
-                id="topbar-search"
-                value={inputValue}
-                onChange={handleChange}
-                placeholder="Search across The Library..."
-                className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-10 pr-20 text-sm text-white outline-none placeholder:text-white/35 transition focus:border-white/20 focus:bg-white/10 sm:pr-24"
-              />
+                <input
+                  id="library-topbar-search"
+                  value={inputValue}
+                  onChange={handleChange}
+                  placeholder="Search your library..."
+                  className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-10 pr-20 text-sm text-white outline-none placeholder:text-white/35 transition focus:border-white/20 focus:bg-white/10 sm:pr-24"
+                />
 
-              {hasMounted && inputValue ? (
-                <button
-                  type="button"
-                  onClick={clearQuery}
-                  className="absolute inset-y-0 right-2 my-auto inline-flex h-9 items-center gap-1 rounded-lg px-2 text-xs text-white/60 transition hover:bg-white/10 hover:text-white sm:right-3 sm:text-sm"
-                  aria-label="Clear topbar search"
-                >
-                  <X className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Clear</span>
-                </button>
-              ) : (
-                <div className="pointer-events-none absolute inset-y-0 right-3 hidden items-center text-xs text-white/35 sm:flex">
-                  Global
+                {hasMounted && inputValue ? (
+                  <button
+                    type="button"
+                    onClick={clearQuery}
+                    className="absolute inset-y-0 right-2 my-auto inline-flex h-9 items-center gap-1 rounded-lg px-2 text-xs text-white/60 transition hover:bg-white/10 hover:text-white sm:right-3 sm:text-sm"
+                    aria-label="Clear library search"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Clear</span>
+                  </button>
+                ) : (
+                  <div className="pointer-events-none absolute inset-y-0 right-3 hidden items-center text-xs text-white/35 sm:flex">
+                    Library
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex min-h-11 items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
+                  <PageIcon className="h-5 w-5 text-white/70" />
                 </div>
-              )}
-            </div>
-          </div>
 
-          <button
-            type="button"
-            className="hidden items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80 transition hover:bg-white/10 sm:inline-flex"
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-            <span>Filter</span>
-          </button>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-white sm:text-base">
+                    {pageTitle}
+                  </p>
+                  <p className="hidden truncate text-xs text-white/40 sm:block">
+                    Workspace
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
 
           <button
             type="button"
@@ -182,6 +216,7 @@ export default function Topbar({ sidebarSummary }: TopbarProps) {
               <p className="max-w-32 truncate text-sm font-medium text-white">
                 {fullName}
               </p>
+
               <div className="mt-0.5 flex items-center gap-1.5">
                 <span
                   className={[
