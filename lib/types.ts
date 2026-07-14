@@ -2,12 +2,15 @@ export interface Book {
   id: number;
   title: string;
   author: string;
+  authors?: string[];
   cover: string;
   description: string;
   rating: number;
   pages: number;
   genre: string[];
+  tags?: string[];
   source_type?: "text" | "pdf" | string;
+  content_type?: string;
   source_url: string | null;
   mime_type?: string | null;
   archived_at?: string | null;

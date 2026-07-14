@@ -1,9 +1,17 @@
 import { create } from "zustand";
 
-export const useReaderStore = create((set) => ({
+type ReaderProgress = Record<string, number>;
+
+type ReaderStore = {
+  progress: ReaderProgress;
+  update: (id: string, page: number) => void;
+};
+
+export const useReaderStore = create<ReaderStore>((set) => ({
+
   progress: {},
   update: (id: string, page: number) =>
-    set((state: any) => ({
+    set((state: ReaderStore) => ({
       progress: { ...state.progress, [id]: page },
     })),
 }));

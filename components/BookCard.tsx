@@ -40,6 +40,7 @@ const sizeStyles: Record<
 
 export default function BookCard({ book, size = "md" }: BookCardProps) {
   const styles = sizeStyles[size];
+  const authorLabel = book.authors?.length ? book.authors.join(", ") : book.author;
 
   return (
     <Link href={`/book/${book.id}`} className={`group block ${styles.widthClass}`}>
@@ -60,7 +61,7 @@ export default function BookCard({ book, size = "md" }: BookCardProps) {
             {book.title}
           </h3>
           <p className={`${styles.authorClass} line-clamp-1 text-white/60`}>
-            {book.author}
+            {authorLabel}
           </p>
         </div>
       </article>

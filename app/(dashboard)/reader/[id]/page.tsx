@@ -32,6 +32,8 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
       getBookContent(bookId),
       getLibraryItemByBookId(bookId, token),
     ]);
+    const authorLabel = book.authors?.length ? book.authors.join(", ") : book.author;
+    const contentTypeLabel = content.content_type ?? content.source_type;
 
     return (
       <div className="w-full max-w-none space-y-6 pb-12">
@@ -44,9 +46,9 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
               <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
                 {book.title}
               </h1>
-              <p className="mt-2 text-sm text-white/65">by {book.author}</p>
+              <p className="mt-2 text-sm text-white/65">by {authorLabel}</p>
               <p className="mt-2 text-sm text-white/50">
-                Source: {content.source_type}
+                Source: {contentTypeLabel}
               </p>
             </div>
 
@@ -71,7 +73,8 @@ export default async function ReaderPage({ params }: ReaderPageProps) {
         {content.source_type === "pdf" && content.source_url ? (
           <PdfReaderClientBridge
             bookId={book.id}
-            fileUrl={content.source_url}
+            // Use server-side proxy to avoid CORS and ensure auth
+            fileUrl={`/api/books/${book.id}/pdf`}
             title={book.title}
             initialPage={libraryItem?.current_page ?? 1}
             initialTotalPages={libraryItem?.total_pages ?? null}

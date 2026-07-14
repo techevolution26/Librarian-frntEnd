@@ -22,6 +22,7 @@ export interface BookContent {
   id: number;
   title: string;
   source_type: "text" | "pdf" | string;
+  content_type?: string;
   mime_type?: string | null;
   source_url?: string | null;
   content_text?: string | null;

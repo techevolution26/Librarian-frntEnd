@@ -20,6 +20,11 @@ export default async function BookPage({ params }: BookPageProps) {
 
   try {
     const book = await getBookById(bookId);
+    const authorLabel = book.authors?.length ? book.authors.join(", ") : book.author;
+    const categoryItems = Array.from(
+      new Set([...(book.tags ?? []), ...(book.genre ?? [])])
+    );
+    const contentTypeLabel = book.content_type ?? book.source_type ?? "Unknown";
 
     return (
       <div className="space-y-8">
@@ -45,10 +50,10 @@ export default async function BookPage({ params }: BookPageProps) {
                 {book.title}
               </h1>
 
-              <p className="mt-3 text-sm text-white/65">by {book.author}</p>
+              <p className="mt-3 text-sm text-white/65">by {authorLabel}</p>
 
               <div className="mt-5 flex flex-wrap gap-2">
-                {book.genre?.map((item) => (
+                {categoryItems.map((item) => (
                   <span
                     key={item}
                     className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70"
@@ -83,7 +88,7 @@ export default async function BookPage({ params }: BookPageProps) {
                     Source
                   </p>
                   <p className="mt-2 flex items-center gap-x-2 text-2xl font-semibold text-white">
-                    {book.source_type}
+                    {contentTypeLabel}
                     <FileText className="size-6 shrink-0 text-white/70" />
                   </p>
                 </div>

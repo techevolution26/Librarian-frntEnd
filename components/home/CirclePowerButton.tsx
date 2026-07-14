@@ -12,6 +12,7 @@ import {
     Infinity,
     MessageCirclePlus,
     X,
+    User,
 } from "lucide-react";
 
 const featureItems = [
@@ -20,6 +21,7 @@ const featureItems = [
     { href: "/discover", label: "Discover", icon: Compass },
     { href: "/connections", label: "Connect", icon: MessageCirclePlus },
     { href: "/circles", label: "Circles", icon: Infinity },
+    { href: "/profile", label: "Profile", icon: User },
     { href: "/settings", label: "Settings", icon: Settings },
 ];
 
