@@ -1,3 +1,5 @@
+"use client";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Book } from "@/lib/types";
@@ -7,6 +9,8 @@ interface HeroProps {
 }
 
 export default function Hero({ book }: HeroProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   return (
     <section className="relative isolate overflow-hidden rounded-[2rem] border border-white/10 bg-neutral-950 text-white shadow-2xl">
       <div className="absolute inset-0">
@@ -28,7 +32,6 @@ export default function Hero({ book }: HeroProps) {
             Featured book
           </p>
 
-
           <h2 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
             {book.title}
           </h2>
@@ -37,7 +40,12 @@ export default function Hero({ book }: HeroProps) {
             by {book.author}
           </p>
 
-          <p className="mt-5 max-w-xl text-sm leading-7 text-white/80 sm:text-base">
+          {/* Line Clamping Description Container */}
+          <p
+            className={`mt-5 max-w-xl text-sm leading-7 text-white/80 sm:text-base transition-all duration-300 ${
+              isExpanded ? "line-clamp-none" : "line-clamp-3"
+            }`}
+          >
             {book.description}
           </p>
 
@@ -49,12 +57,13 @@ export default function Hero({ book }: HeroProps) {
               Read Now
             </Link>
 
-            <Link
-              href={`/book/${book.id}`}
-              className="rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-medium text-white transition hover:bg-white/10"
+            {/* Changed from Link to a toggle Button */}
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-medium text-white transition hover:bg-white/10 cursor-pointer"
             >
-              View Details
-            </Link>
+              {isExpanded ? "Hide Details" : "View Details"}
+            </button>
           </div>
         </div>
       </div>

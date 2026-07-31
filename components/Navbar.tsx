@@ -1,5 +1,5 @@
 "use client";
-import Image from 'next/image';
+import Image from "next/image";
 import { BookSearch } from "lucide-react";
 import { ChangeEvent } from "react";
 
@@ -17,7 +17,8 @@ export default function Navbar({
   };
 
   return (
-    <header className="flex items-center justify-between gap-4 border-b border-white/10 bg-black/80 px-6 py-4 text-white backdrop-blur-md">
+    /* Changed to sticky layout with safe layering and background blurs */
+    <header className="sticky top-0 z-50 flex items-center justify-between gap-4 border-b border-white/10 bg-black/80 px-6 py-4 text-white backdrop-blur-md">
       {/* Logo and Name Container */}
       <div className="flex items-center gap-x-4">
         <div className="relative size-12 shrink-0 overflow-hidden rounded-xl border border-white/10">
@@ -26,7 +27,7 @@ export default function Navbar({
             alt="The Librarian Logo"
             fill
             priority
-            sizes="(max-width: 768px) 100px, 150px"
+            sizes="48px" /* Optimized from 100px/150px to match its actual 'size-12' dimensions */
             className="object-contain object-left"
           />
         </div>

@@ -244,6 +244,7 @@ export default function HomePageClient({
           <div className="rounded-3xl border border-dashed border-white/10 bg-white/[0.03] p-10 text-sm text-white/60">
             No books are available yet.
           </div>
+          <CirclePowerButton/>
         </section>
       </main>
     );

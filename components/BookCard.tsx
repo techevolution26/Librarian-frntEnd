@@ -2,7 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Book } from "@/lib/types";
 
-type BookCardSize = "sm" | "md" | "lg";
+// Expanded sizes type to map exactly to Row requirements
+export type BookCardSize = "sm" | "md" | "lg" | "xl";
 
 interface BookCardProps {
   book: Book;
@@ -20,30 +21,41 @@ const sizeStyles: Record<
 > = {
   sm: {
     widthClass: "min-w-[120px]",
-    imageSizes: "120px",
+    imageSizes: "(max-width: 640px) 120px, 120px",
     titleClass: "text-xs",
     authorClass: "text-[11px]",
   },
   md: {
     widthClass: "min-w-[160px]",
-    imageSizes: "160px",
+    imageSizes: "(max-width: 640px) 160px, 160px",
     titleClass: "text-sm",
     authorClass: "text-xs",
   },
   lg: {
-    widthClass: "min-w-[200px]",
-    imageSizes: "200px",
+    widthClass: "min-w-[190px]", // Adjusted from 200px to match Row's 190px
+    imageSizes: "(max-width: 640px) 190px, 190px",
     titleClass: "text-base",
+    authorClass: "text-sm",
+  },
+  xl: {
+    widthClass: "min-w-[220px]", // Added support for editorial variant
+    imageSizes: "(max-width: 640px) 220px, 220px",
+    titleClass: "text-base font-semibold",
     authorClass: "text-sm",
   },
 };
 
 export default function BookCard({ book, size = "md" }: BookCardProps) {
   const styles = sizeStyles[size];
-  const authorLabel = book.authors?.length ? book.authors.join(", ") : book.author;
+  const authorLabel = book.authors?.length
+    ? book.authors.join(", ")
+    : book.author;
 
   return (
-    <Link href={`/book/${book.id}`} className={`group block ${styles.widthClass}`}>
+    <Link
+      href={`/book/${book.id}`}
+      className={`group block ${styles.widthClass}`}
+    >
       <article className="transition-transform duration-200 group-hover:-translate-y-1">
         <div className="relative aspect-[2/3] overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-lg ring-1 ring-white/5">
           <Image
@@ -57,7 +69,9 @@ export default function BookCard({ book, size = "md" }: BookCardProps) {
         </div>
 
         <div className="mt-3 space-y-1">
-          <h3 className={`${styles.titleClass} line-clamp-1 font-medium text-white transition group-hover:text-white/90`}>
+          <h3
+            className={`${styles.titleClass} line-clamp-1 font-medium text-white transition group-hover:text-white/90`}
+          >
             {book.title}
           </h3>
           <p className={`${styles.authorClass} line-clamp-1 text-white/60`}>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import BookCard from "./BookCard";
+import BookCard, { BookCardSize } from "./BookCard";
 import { Book } from "@/lib/types";
 import { ReactNode } from "react";
 
@@ -22,6 +22,7 @@ const variantStyles: Record<
     titleSize: string;
     subtitleClass: string;
     containerClass: string;
+    cardSizeMapping: BookCardSize; // Linked parent variant to internal card size
   }
 > = {
   compact: {
@@ -30,6 +31,7 @@ const variantStyles: Record<
     titleSize: "text-base",
     subtitleClass: "text-white/50",
     containerClass: "rounded-2xl border border-white/10 bg-white/[0.03] p-4",
+    cardSizeMapping: "sm",
   },
   standard: {
     shelfGap: "gap-4",
@@ -37,6 +39,7 @@ const variantStyles: Record<
     titleSize: "text-lg",
     subtitleClass: "text-white/55",
     containerClass: "",
+    cardSizeMapping: "md",
   },
   large: {
     shelfGap: "gap-5",
@@ -44,6 +47,7 @@ const variantStyles: Record<
     titleSize: "text-xl",
     subtitleClass: "text-white/60",
     containerClass: "rounded-[2rem] border border-white/10 bg-white/[0.03] p-5",
+    cardSizeMapping: "lg",
   },
   editorial: {
     shelfGap: "gap-6",
@@ -52,6 +56,7 @@ const variantStyles: Record<
     subtitleClass: "text-white/65",
     containerClass:
       "rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_35%),linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] p-6",
+    cardSizeMapping: "xl", // Mapped to the new XL layout optimization
   },
 };
 
@@ -70,7 +75,9 @@ export default function Row({
     <section className={styles.containerClass || "space-y-4"}>
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h2 className={`${styles.titleSize} font-semibold tracking-tight text-white/90`}>
+          <h2
+            className={`${styles.titleSize} font-semibold tracking-tight text-white/90`}
+          >
             {title}
           </h2>
           {variant === "editorial" ? (
@@ -93,7 +100,7 @@ export default function Row({
       <div className={`flex ${styles.shelfGap} overflow-x-auto pb-2 pr-2`}>
         {visibleBooks.map((book) => (
           <div key={book.id} className={styles.cardWidth}>
-            <BookCard book={book} />
+            <BookCard book={book} size={styles.cardSizeMapping} />
           </div>
         ))}
       </div>
